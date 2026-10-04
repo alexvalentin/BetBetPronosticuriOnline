@@ -28,6 +28,7 @@ jobs:
           if [ -n "$INPUT_MODE" ]; then MODE="$INPUT_MODE"; fi
           curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync?mode=$MODE"
       - name: Sincronizare Highlightly (Liga 1/2, EL, ECL, Nations League)
+        if: ${{ !cancelled() }}
         env:
           SITE_URL: ${{ secrets.SITE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

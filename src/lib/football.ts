@@ -57,7 +57,7 @@ export const fetchMatchesByDateRange = (dateFrom: string, dateTo: string) =>
 export const fetchLiveMatches = () =>
   api<{ matches: Match[] }>("/matches", {
     competitions: CODES,
-    status: "IN_PLAY,PAUSED,EXTRA_TIME,PENALTY_SHOOTOUT,SUSPENDED",
+    status: "LIVE,IN_PLAY,PAUSED,SUSPENDED",
   }).then((r) => r.matches);
 
 // 1 request per competitie
