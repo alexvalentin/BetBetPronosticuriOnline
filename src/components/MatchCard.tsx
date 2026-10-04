@@ -22,13 +22,26 @@ export default function MatchCard({
   prediction?: Prediction;
   now: number;
 }) {
-  const open = !match.is_finished && new Date(match.kickoff_at).getTime() > now;
+  const kickoff = new Date(match.kickoff_at).getTime();
+  const open = !match.is_finished && kickoff > now;
+  // LIVE: a inceput, nu e terminat, nu e amanat/anulat, si au trecut mai putin de 3 ore de la start
+  const live =
+    !match.is_finished &&
+    kickoff <= now &&
+    now - kickoff < 3 * 3600e3 &&
+    !["POSTPONED", "Postponed", "CANCELLED", "Cancelled"].includes(match.status);
   const chip = pointsChip(prediction?.points ?? null);
 
   return (
     <article className="match">
       <div className="meta">
         <span className="league">{match.league_name}</span>
+		{live && (
+          <span className="live-badge">
+            <span className="live-dot" aria-hidden="true" />
+            LIVE
+          </span>
+        )}
         {match.round && <span>{match.round}</span>}
         <span>{dateLabel(match.kickoff_at)} · {timeLabel(match.kickoff_at)}</span>
       </div>
