@@ -258,9 +258,21 @@ a { color: inherit; }
   font-size: 0.9rem;
 }
 .chips a[aria-current="page"] { background: var(--pitch-dark); border-color: var(--pitch-dark); color: #fff; }
-.standings th, .standings td { padding: 8px 10px; text-align: center; }
-.standings th:nth-child(2), .standings td.teamcell { text-align: left; }
-.teamcell { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+/* Tabele: aceleasi latimi de coloane in toate tabelele, indiferent de lungimea numelor */
+.standings { table-layout: fixed; }
+.standings th, .standings td { padding: 8px 4px; text-align: center; }
+.standings th:nth-child(1), .standings td:nth-child(1) { width: 40px; }
+.standings th:nth-child(n+3), .standings td:nth-child(n+3) { width: 46px; }
+.standings th:nth-child(2), .standings td.teamcell { text-align: left; padding-left: 8px; }
+.standings td.teamcell { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+.teamcell img { vertical-align: middle; margin-right: 8px; }
+@media (max-width: 520px) {
+  .standings th:nth-child(1), .standings td:nth-child(1) { width: 28px; }
+  .standings th:nth-child(n+3), .standings td:nth-child(n+3) { width: 30px; }
+  .standings td.teamcell { font-size: 0.88rem; }
+  .standings td.teamcell img { width: 16px; height: 16px; margin-right: 6px; }
+  .standings .pts { font-size: 1.2rem; }
+}
 .rank { box-shadow: inset 4px 0 0 transparent; font-weight: 600; }
 .rank.z-ucl { box-shadow: inset 4px 0 0 #1b6b45; }
 .rank.z-uel { box-shadow: inset 4px 0 0 #e08a1e; }
