@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: "*/15 * * * *"   # scoruri live (ambele surse): 1-2 request-uri cand nu se joaca nimic
     - cron: "30 5 * * *"     # program (ambele surse): o data pe zi
-    - cron: "45 5 * * *"     # tabele (ambele surse): o data pe zi
+    - cron: "0 22 * * *"     # tabele (ambele surse): o data pe zi
   workflow_dispatch:
     inputs:
       mode:
@@ -24,7 +24,7 @@ jobs:
         run: |
           MODE=live
           if [ "$SCHEDULE" = "30 5 * * *" ]; then MODE=upcoming; fi
-          if [ "$SCHEDULE" = "45 5 * * *" ]; then MODE=standings; fi
+          if [ "$SCHEDULE" = "0 22 * * *" ]; then MODE=standings; fi
           if [ -n "$INPUT_MODE" ]; then MODE="$INPUT_MODE"; fi
           curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync?mode=$MODE"
       - name: Sincronizare Highlightly (Liga 1/2, EL, ECL, Nations League)
@@ -37,6 +37,6 @@ jobs:
         run: |
           MODE=live
           if [ "$SCHEDULE" = "30 5 * * *" ]; then MODE=upcoming; fi
-          if [ "$SCHEDULE" = "45 5 * * *" ]; then MODE=standings; fi
+          if [ "$SCHEDULE" = "0 22 * * *" ]; then MODE=standings; fi
           if [ -n "$INPUT_MODE" ]; then MODE="$INPUT_MODE"; fi
           curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync-highlightly?mode=$MODE"
