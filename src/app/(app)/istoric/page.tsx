@@ -35,13 +35,13 @@ export default async function HistoryPage() {
           <div className="result">
             <div className="team">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {m.home_logo && <img src={m.home_logo} alt="" width={38} height={36} loading="lazy" />}
+              {m.home_logo && <img src={m.home_logo} alt="" width={28} height={26} loading="lazy" />}
               <span>{m.home_team}</span>
             </div>
             <b>{m.home_goals}:{m.away_goals}</b>
             <div className="team away">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {m.away_logo && <img src={m.away_logo} alt="" width={38} height={36} loading="lazy" />}
+              {m.away_logo && <img src={m.away_logo} alt="" width={28} height={26} loading="lazy" />}
               <span>{m.away_team}</span>
             </div>
           </div>
