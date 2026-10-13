@@ -7,10 +7,17 @@ export const LEAGUES: Record<string, string> = {
   SA: "Serie A",
   FL1: "Ligue 1",
   CL: "Champions League",
+  ELC: "Championship",
+  DED: "Eredivisie",
+  PPL: "Primeira Liga",
+  BSA: "Campionatul Brazilian",
 };
 
+// Competitii pentru care pastram DOAR tabelul (clasamentul), fara meciuri/pronosticuri.
+export const MATCH_EXCLUDED = ["ELC", "DED", "PPL", "BSA"];
+
 const BASE = "https://api.football-data.org/v4";
-const CODES = Object.keys(LEAGUES).join(",");
+const CODES = Object.keys(LEAGUES).filter((c) => !MATCH_EXCLUDED.includes(c)).join(",");
 
 export type Match = {
   id: number;

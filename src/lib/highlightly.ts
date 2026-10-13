@@ -2,8 +2,8 @@
 // care nu exista pe football-data.org: Liga 1, Liga 2, Europa League, Conference League, Nations League.
 // ID-urile sunt numerice, confirmate manual (vezi conversatia de testare), nu se pot cauta automat la runtime.
 export const LEAGUES: Record<string, string> = {
-  "241617": "Liga 1",
-  "242468": "Liga 2",
+  "241617": "Superliga România",
+  "242468": "Liga 2 România",
   "3337": "Europa League",
   "722432": "Conference League",
   "5039": "Nations League",

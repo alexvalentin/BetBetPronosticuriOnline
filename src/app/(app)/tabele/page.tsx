@@ -31,10 +31,14 @@ export default async function StandingsPage({
 
   const { data } = await supabase.from("standings").select("*").returns<StandingsRecord[]>();
 
-  const order = Object.keys(LEAGUES);
+  // Ordinea tab-urilor; ce nu e in lista apare la final
+  const order = ["PL", "PD", "BL1", "SA", "FL1", "241617", "242468", "CL", "3337", "722432", "ELC"];
+  const names: Record<string, string> = { "241617": "Superliga România", "242468": "Liga 2 România" };
+  const rank = (id: string) => (order.includes(id) ? order.indexOf(id) : order.length);
   const list = (data ?? [])
     .filter((s) => Array.isArray(s.data) && s.data.length > 0)
-    .sort((a, b) => order.indexOf(a.league_id) - order.indexOf(b.league_id));
+    .map((s) => ({ ...s, league_name: names[s.league_id] ?? LEAGUES[s.league_id] ?? s.league_name }))
+    .sort((a, b) => rank(a.league_id) - rank(b.league_id) || a.league_name.localeCompare(b.league_name));
 
   const defaultLeague = liga ?? firstMatch?.league_id;
   const selected = list.find((s) => s.league_id === defaultLeague) ?? list[0];

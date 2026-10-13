@@ -1,3 +1,4 @@
+import { MATCH_EXCLUDED } from "@/lib/football";
 import { createClient } from "@/lib/supabase/server";
 import { dayLabel, pointsChip, predictionReason } from "@/lib/format";
 import type { Match } from "@/lib/types";
@@ -13,6 +14,7 @@ export default async function HistoryPage() {
     supabase
       .from("matches")
       .select("*, predictions(user_id, home_goals, away_goals, points)")
+      .not("league_id", "in", `(${MATCH_EXCLUDED.join(",")})`)
       .eq("is_finished", true)
       .order("kickoff_at", { ascending: false })
       .limit(60)

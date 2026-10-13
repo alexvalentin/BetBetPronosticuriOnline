@@ -125,9 +125,12 @@ a { color: inherit; }
   gap: 4px;
   text-align: center;
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.8rem;
+  line-height: 1.2;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word; /* rupe la spatiu; un cuvant e spart doar daca nu incape deloc pe rand */
+  word-break: normal;
+  hyphens: none;
 }
 
 .team img,

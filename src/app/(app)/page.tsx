@@ -1,3 +1,4 @@
+import { MATCH_EXCLUDED } from "@/lib/football";
 import { createClient } from "@/lib/supabase/server";
 import MatchCard from "@/components/MatchCard";
 import { dayKey, dayLabel } from "@/lib/format";
@@ -28,6 +29,7 @@ export default async function MatchesPage({
   const { data: matches } = await supabase
     .from("matches")
     .select("*")
+    .not("league_id", "in", `(${MATCH_EXCLUDED.join(",")})`)
     .gte("kickoff_at", new Date(now - 4 * 3600e3).toISOString())
     .lte("kickoff_at", windowEnd.toISOString())
     .order("kickoff_at", { ascending: true })
