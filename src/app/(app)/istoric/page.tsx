@@ -32,13 +32,19 @@ export default async function HistoryPage() {
             <span className="league">{m.league_name}</span>
             <span>{dayLabel(m.kickoff_at)}</span>
           </div>
-          <h3 className="result">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {m.home_logo && <img src={m.home_logo} alt="" width={38} height={36} loading="lazy" />}
-            {m.home_team} <b>{m.home_goals}:{m.away_goals}</b> {m.away_team}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {m.away_logo && <img src={m.away_logo} alt="" width={38} height={36} loading="lazy" />}
-          </h3>
+          <div className="result">
+            <div className="team">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {m.home_logo && <img src={m.home_logo} alt="" width={38} height={36} loading="lazy" />}
+              <span>{m.home_team}</span>
+            </div>
+            <b>{m.home_goals}:{m.away_goals}</b>
+            <div className="team away">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {m.away_logo && <img src={m.away_logo} alt="" width={38} height={36} loading="lazy" />}
+              <span>{m.away_team}</span>
+            </div>
+          </div>
           <ul className="picks">
             {(profiles ?? []).map((p) => {
               const pick = m.predictions.find((x) => x.user_id === p.id);
