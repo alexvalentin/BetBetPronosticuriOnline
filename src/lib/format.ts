@@ -50,9 +50,9 @@ export function pointsChip(points: number | null) {
 // Eticheta de puncte pentru Istoric: verde = scor corect, galben = rezultat corect, rosu = gresit
 export function historyChip(points: number | null) {
   if (points === null) return null;
-  if (points === 3) return { text: "Scor Corect +3", tone: "h-exact" };
-  if (points === 1) return { text: "Rezultat Corect (1/X/2) +1", tone: "h-ok" };
-  return { text: "Rezultat + Scor Greșit +0", tone: "h-miss" };
+  if (points === 3) return { text: "Scor exact +3", tone: "h-exact" };
+  if (points === 1) return { text: "Rezultat corect +1", tone: "h-ok" };
+  return { text: "Greșit +0", tone: "h-miss" };
 }
 
 // Explica pe scurt de ce un pronostic a primit punctele respective, comparand predictia cu rezultatul real

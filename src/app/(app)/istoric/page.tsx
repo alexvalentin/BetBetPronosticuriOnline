@@ -34,7 +34,7 @@ export default async function HistoryPage() {
           <div className="result">
             <div className="team">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {m.home_logo && <img src={m.home_logo} alt="" width={31} height={29} loading="lazy" />}
+              {m.home_logo && <img src={m.home_logo} alt="" width={33} height={31} loading="lazy" />}
               <span>{m.home_team}</span>
             </div>
             <div className="score">
