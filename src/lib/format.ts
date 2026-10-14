@@ -21,6 +21,12 @@ export const dateLabel = (iso: string) =>
 export const timeLabel = (iso: string) =>
   new Date(iso).toLocaleTimeString("ro-RO", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
 
+// 14.10.2026 19:45 (ora Romaniei)
+export const dateTimeShort = (iso: string) =>
+  new Date(iso)
+    .toLocaleString("ro-RO", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    .replace(",", "");
+
 const LIVE = new Set([
   "IN_PLAY", "PAUSED", "EXTRA_TIME", "PENALTY_SHOOTOUT", "SUSPENDED", // football-data.org
   "In Play", "Half Time", "Extra Time", "Penalties", // Highlightly
@@ -39,6 +45,14 @@ export function pointsChip(points: number | null) {
   if (points === 3) return { text: "Scor exact +3", tone: "exact" };
   if (points === 1) return { text: "Rezultat corect +1", tone: "ok" };
   return { text: "Greșit 0", tone: "miss" };
+}
+
+// Eticheta de puncte pentru Istoric: verde = scor corect, galben = rezultat corect, rosu = gresit
+export function historyChip(points: number | null) {
+  if (points === null) return null;
+  if (points === 3) return { text: "Scor Corect +3", tone: "h-exact" };
+  if (points === 1) return { text: "Rezultat Corect (1/X/2) +1", tone: "h-ok" };
+  return { text: "Rezultat + Scor Greșit +0", tone: "h-miss" };
 }
 
 // Explica pe scurt de ce un pronostic a primit punctele respective, comparand predictia cu rezultatul real

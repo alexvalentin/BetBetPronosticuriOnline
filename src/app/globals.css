@@ -224,13 +224,27 @@ a { color: inherit; }
 
 /* Istoric */
 .result { margin: 26px 0 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
-.result b { font-family: var(--font-display), sans-serif; font-size: 24.4px; padding: 0 4px; }
+.result b { font-family: var(--font-display), sans-serif; font-size: 28.4px; padding: 0 4px; line-height: 1.1; }
 .result .team { font-size: 14.8px; } /* doar in Istoric; pe Meciuri ramane 0.8rem */
 .result img { vertical-align: middle; filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 2px rgba(0, 0, 0, 0.4)); border-radius: 2px; }
-.picks { list-style: none; margin: 36px 0 0; padding: 0; display: grid; gap: 8px; }
-.picks li { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-.pick-result { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-.reason { text-align: right; }
+.result .score { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.result .when { font-size: 0.7rem; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.fade-line { height: 1px; margin: 16px 0 14px; background: linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent); }
+.picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.picks li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pick-user { font-size: 0.82rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-result { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px 8px; }
+.pick-score { font-size: 0.9rem; white-space: nowrap; }
+.hchip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+.hchip.h-exact { background: #d5ebdd; color: #14502f; }
+.hchip.h-ok { background: #fbefb8; color: #6b5200; }
+.hchip.h-miss { background: #f3d9d3; color: #7a2417; }
+@media (max-width: 420px) {
+  .result .when { font-size: 0.64rem; }
+  .pick-user { font-size: 0.76rem; }
+  .pick-score { font-size: 0.82rem; }
+  .hchip { font-size: 0.66rem; padding: 2px 7px; }
+}
 
 /* Login */
 .login { max-width: 380px; margin: 0 auto; padding: 14vh 20px 40px; }

@@ -1,6 +1,6 @@
 import { MATCH_EXCLUDED } from "@/lib/football";
 import { createClient } from "@/lib/supabase/server";
-import { dayLabel, pointsChip, predictionReason } from "@/lib/format";
+import { dateTimeShort, historyChip } from "@/lib/format";
 import type { Match } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -30,40 +30,44 @@ export default async function HistoryPage() {
         <article className="match" key={m.id}>
           <div className="meta">
             <span className="league">{m.league_name}</span>
-            <span>{dayLabel(m.kickoff_at)}</span>
           </div>
           <div className="result">
             <div className="team">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {m.home_logo && <img src={m.home_logo} alt="" width={29} height={27} loading="lazy" />}
+              {m.home_logo && <img src={m.home_logo} alt="" width={31} height={29} loading="lazy" />}
               <span>{m.home_team}</span>
             </div>
-            <b>{m.home_goals}:{m.away_goals}</b>
+            <div className="score">
+              <span className="when">{dateTimeShort(m.kickoff_at)}</span>
+              <b>{m.home_goals}:{m.away_goals}</b>
+            </div>
             <div className="team away">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {m.away_logo && <img src={m.away_logo} alt="" width={29} height={27} loading="lazy" />}
+              {m.away_logo && <img src={m.away_logo} alt="" width={31} height={29} loading="lazy" />}
               <span>{m.away_team}</span>
             </div>
           </div>
-          <ul className="picks">
-            {(profiles ?? []).map((p) => {
-              const pick = m.predictions.find((x) => x.user_id === p.id);
-              const chip = pointsChip(pick?.points ?? null);
-              const reason = pick ? predictionReason(pick, m) : null;
-              return (
-                <li key={p.id}>
-                  <span>User: {p.display_name}</span>
-                  <span className="pick-result">
-                    <span>
-                      {pick ? <>Pronostic: {pick.home_goals}:{pick.away_goals}</> : "fără pronostic"}{" "}
-                      {chip && <span className={`chip ${chip.tone}`}>{chip.text}</span>}
-                    </span>
-                    {reason && <span className="muted small reason">{reason}</span>}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+          {(profiles ?? []).some((p) => m.predictions.some((x) => x.user_id === p.id)) && (
+            <>
+              <div className="fade-line" aria-hidden="true" />
+              <ul className="picks">
+                {(profiles ?? []).map((p) => {
+                  const pick = m.predictions.find((x) => x.user_id === p.id);
+                  if (!pick) return null; // fara pronostic: nu afisam userul deloc
+                  const chip = historyChip(pick.points);
+                  return (
+                    <li key={p.id}>
+                      <span className="pick-user">User: {p.display_name}</span>
+                      <span className="pick-result">
+                        <span className="pick-score">Pronostic: {pick.home_goals}:{pick.away_goals}</span>
+                        {chip && <span className={`hchip ${chip.tone}`}>{chip.text}</span>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
         </article>
       ))}
     </>
