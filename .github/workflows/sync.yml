@@ -3,8 +3,8 @@ name: Sincronizare meciuri
 on:
   schedule:
     - cron: "*/15 * * * *"   # scoruri live (ambele surse): 1-2 request-uri cand nu se joaca nimic
-    - cron: "30 5 * * *"     # program (ambele surse): o data pe zi
-    - cron: "0 22 * * *"     # tabele (ambele surse): o data pe zi
+    - cron: "5 21 * * *"     # program + inchidere meciuri de ieri: 00:05 ora Romaniei (vara). Dupa 25 oct: "5 22 * * *"
+    - cron: "10 22 * * *"    # tabele: 01:10 ora Romaniei (vara), la 10 min dupa ora fixa ca sa nu se ciocneasca cu live. Dupa 25 oct: "10 23 * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -23,8 +23,8 @@ jobs:
           SCHEDULE: ${{ github.event.schedule }}
         run: |
           MODE=live
-          if [ "$SCHEDULE" = "30 5 * * *" ]; then MODE=upcoming; fi
-          if [ "$SCHEDULE" = "0 22 * * *" ]; then MODE=standings; fi
+          if [ "$SCHEDULE" = "5 21 * * *" ]; then MODE=upcoming; fi
+          if [ "$SCHEDULE" = "10 22 * * *" ]; then MODE=standings; fi
           if [ -n "$INPUT_MODE" ]; then MODE="$INPUT_MODE"; fi
           curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync?mode=$MODE"
       - name: Sincronizare Highlightly (Liga 1/2, EL, ECL, Nations League)
@@ -36,7 +36,7 @@ jobs:
           SCHEDULE: ${{ github.event.schedule }}
         run: |
           MODE=live
-          if [ "$SCHEDULE" = "30 5 * * *" ]; then MODE=upcoming; fi
-          if [ "$SCHEDULE" = "0 22 * * *" ]; then MODE=standings; fi
+          if [ "$SCHEDULE" = "5 21 * * *" ]; then MODE=upcoming; fi
+          if [ "$SCHEDULE" = "10 22 * * *" ]; then MODE=standings; fi
           if [ -n "$INPUT_MODE" ]; then MODE="$INPUT_MODE"; fi
           curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync-highlightly?mode=$MODE"

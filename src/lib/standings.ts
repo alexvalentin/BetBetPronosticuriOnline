@@ -29,7 +29,7 @@ export async function refreshAllStandings(db: SupabaseClient) {
     } catch (e) {
       console.error("standings", code, e);
     }
-    await sleep(2500); // ramanem sub limita de 10 request-uri/minut, cu marja mai mare
+    await sleep(3500); // ramanem sub limita de 10 request-uri/minut, cu marja mai mare
   }
   return refreshed;
 }
