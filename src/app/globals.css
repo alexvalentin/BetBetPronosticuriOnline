@@ -224,11 +224,12 @@ a { color: inherit; }
 
 /* Istoric */
 .result { margin: 26px 0 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
-.result b { font-family: var(--font-display), sans-serif; font-size: 30px; padding: 0 4px; line-height: 1.1; }
-.result .team { font-size: 16px; } /* doar in Istoric; pe Meciuri ramane 0.8rem */
+.result b { font-family: var(--font-display), sans-serif; font-size: 28.4px; padding: 0 4px; line-height: 1.1; }
+.result .team { font-size: 14.8px; } /* doar in Istoric; pe Meciuri ramane 0.8rem */
 .result img { vertical-align: middle; filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 2px rgba(0, 0, 0, 0.4)); border-radius: 2px; }
-.result .score { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; position: relative; top: -10px; }.result .when { font-size: 0.8rem; font-weight: 500; color: var(--muted); white-space: nowrap; }
-.fade-line { height: 1px; margin: 14px 0 18px; background: linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent); }
+.result .score { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; position: relative; top: -10px; }
+.result .when { font-size: 0.7rem; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.fade-line { height: 1px; margin: 16px 0 14px; background: linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent); }
 .picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .picks li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .pick-user { font-size: 0.82rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -239,7 +240,7 @@ a { color: inherit; }
 .hchip.h-ok { background: #fbefb8; color: #6b5200; }
 .hchip.h-miss { background: #f3d9d3; color: #7a2417; }
 @media (max-width: 420px) {
-  .result .when { font-size: 0.68rem; }
+  .result .when { font-size: 0.64rem; }
   .pick-user { font-size: 0.76rem; }
   .pick-score { font-size: 0.82rem; }
   .hchip { font-size: 0.66rem; padding: 2px 7px; }
@@ -281,7 +282,11 @@ a { color: inherit; }
 .standings th:nth-child(1), .standings td:nth-child(1) { width: 40px; }
 .standings th:nth-child(n+3), .standings td:nth-child(n+3) { width: 46px; }
 .standings th:nth-child(2), .standings td.teamcell { text-align: left; padding-left: 8px; }
-.standings td.teamcell { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+.standings td.teamcell { white-space: normal; line-height: 1.25; }
+.teamwrap { display: flex; align-items: center; }
+.teamwrap img { flex: none; }
+/* cuvintele raman intregi; se rupe doar la spatiu (un cuvant se sparge doar daca nu incape deloc) */
+.teamname { min-width: 0; word-spacing: 1px; overflow-wrap: break-word; word-break: normal; hyphens: none; }
 .teamcell img { vertical-align: middle; margin-right: 8px; }
 @media (max-width: 520px) {
   .standings th:nth-child(1), .standings td:nth-child(1) { width: 28px; }

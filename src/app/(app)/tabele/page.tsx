@@ -85,8 +85,10 @@ export default async function StandingsPage({
                         <td className="rank">{r.position}</td>
                         <td className="teamcell">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={r.team.crest} alt="" width={20} height={20} loading="lazy" />
-                          {r.team.name}
+                          <div className="teamwrap">
+                            <img src={r.team.crest} alt="" width={20} height={20} loading="lazy" />
+                            <span className="teamname">{r.team.name}</span>
+                          </div>
                         </td>
                         <td>{r.playedGames}</td>
                         <td>{r.won}</td>
