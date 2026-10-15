@@ -1,7 +1,7 @@
 import { MATCH_EXCLUDED } from "@/lib/football";
 import { createClient } from "@/lib/supabase/server";
 import MatchCard from "@/components/MatchCard";
-import { dayKey, dayLabel } from "@/lib/format";
+import { dayKey, dayLabel, startOfDayRO } from "@/lib/format";
 import type { Match, Prediction } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +30,8 @@ export default async function MatchesPage({
     .from("matches")
     .select("*")
     .not("league_id", "in", `(${MATCH_EXCLUDED.join(",")})`)
-    .gte("kickoff_at", new Date(now - 4 * 3600e3).toISOString())
+    // Meciurile de azi raman toata ziua (inclusiv cele terminate); cele neterminate ramase peste miezul noptii raman cat se joaca
+    .or(`kickoff_at.gte.${new Date(startOfDayRO(now)).toISOString()},and(is_finished.eq.false,kickoff_at.gte.${new Date(now - 4 * 3600e3).toISOString()})`)
     .lte("kickoff_at", windowEnd.toISOString())
     .order("kickoff_at", { ascending: true })
     .limit(150)

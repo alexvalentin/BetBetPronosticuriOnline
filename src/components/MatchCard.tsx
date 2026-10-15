@@ -1,6 +1,6 @@
 import { savePrediction } from "@/app/actions";
 import type { Match, Prediction } from "@/lib/types";
-import { dateLabel, pointsChip, statusLabel, timeLabel } from "@/lib/format";
+import { dateLabel, matchPhase, pointsChip, statusLabel, timeLabel } from "@/lib/format";
 import SaveButton from "@/components/SaveButton";
 
 function Team({ name, logo, away }: { name: string; logo: string | null; away?: boolean }) {
@@ -24,24 +24,21 @@ export default function MatchCard({
 }) {
   const kickoff = new Date(match.kickoff_at).getTime();
   const open = !match.is_finished && kickoff > now;
-  // LIVE: a inceput, nu e terminat, nu e amanat/anulat, si au trecut mai putin de 3 ore de la start
-  const live =
-    !match.is_finished &&
-    kickoff <= now &&
-    now - kickoff < 3 * 3600e3 &&
-    !["POSTPONED", "Postponed", "CANCELLED", "Cancelled"].includes(match.status);
+  const phase = matchPhase(match, now);
   const chip = pointsChip(prediction?.points ?? null);
 
   return (
     <article className="match">
       <div className="meta">
         <span className="league">{match.league_name}</span>
-		{live && (
+        {phase === "live" && (
           <span className="live-badge">
             <span className="live-dot" aria-hidden="true" />
             LIVE
           </span>
         )}
+        {phase === "finished" && <span className="finished-badge">Terminat</span>}
+        {phase === "checking" && <span className="check-badge">Se verifică</span>}
         {match.round && <span>{match.round}</span>}
         <span>{dateLabel(match.kickoff_at)} · {timeLabel(match.kickoff_at)}</span>
       </div>
