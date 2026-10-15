@@ -29,7 +29,7 @@ export default async function HistoryPage() {
       {(matches ?? []).map((m) => (
         <article className="match" key={m.id}>
           <div className="meta">
-            <span className="league">{m.league_name}</span>
+            <span className="league" data-league={m.league_id}>{m.league_name}</span>
           </div>
           <div className="result">
             <div className="team">

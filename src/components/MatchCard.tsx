@@ -30,7 +30,7 @@ export default function MatchCard({
   return (
     <article className="match">
       <div className="meta">
-        <span className="league">{match.league_name}</span>
+        <span className="league" data-league={match.league_id}>{match.league_name}</span>
         {phase === "live" && (
           <span className="live-badge">
             <span className="live-dot" aria-hidden="true" />

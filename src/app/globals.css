@@ -378,3 +378,11 @@ a { color: inherit; }
   padding: 2px 10px;
   border-radius: 999px;
 }
+
+/* Culoarea insignei competitiei (Meciuri si Istoric), dupa id-ul ligii */
+.meta .league[data-league="3337"]   { background: #ffa500; color: #3b2f00; } /* Europa League */
+.meta .league[data-league="CL"]     { background: #010056; color: #fff; }    /* Champions League */
+.meta .league[data-league="722432"] { background: #00be14; color: #04230a; } /* Conference League */
+.meta .league[data-league="PD"]     { background: #ff4b44; color: #2a0a08; } /* La Liga */
+.meta .league[data-league="SA"]     { background: #0032a0; color: #fff; }    /* Serie A */
+.meta .league[data-league="241617"] { background: #e30613; color: #fff; }    /* Superliga Romaniei */
