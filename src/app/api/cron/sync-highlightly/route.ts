@@ -6,10 +6,10 @@ import { syncHighlightlyLive } from "@/lib/sync-live";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// mode=upcoming  -> ieri + azi + urmatoarele 3 zile (5 zile), pentru fiecare din cele 5 competitii: 25 request-uri
+// mode=upcoming  -> azi + maine (ora Romaniei), pentru fiecare din cele 5 competitii: 10 request-uri
 // mode=live      -> doar perechile competitie+zi cu un meci inceput si neterminat in baza noastra: 0-cateva request-uri
 // mode=standings -> o data pe zi, cate un request per competitie: 5 request-uri
-// Total pe zi, in cel mai incarcat caz: ~25, mult sub limita de 100 a acestui API.
+// Total pe zi, in cel mai incarcat caz: ~10 + live + 5, mult sub limita de 100 a acestui API.
 export async function GET(req: Request) {
   if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -44,9 +44,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ mode, ...(await syncHighlightlyLive(db, force)) });
   }
 
-  // upcoming: ieri (scorul final) + azi + urmatoarele 3 zile (rularea de la 00:05 ora Romaniei e inca ziua
-  // anterioara in UTC, deci fara +3 ultima zi afisata pe site ar lipsi)
-  const days = [-1, 0, 1, 2, 3].map((i) => new Date(Date.now() + i * 86400e3).toISOString().slice(0, 10));
+  // upcoming: doar azi si maine, dupa data din Romania (site-ul afiseaza doar aceste doua zile).
+  // Scorul final al meciurilor de ieri vine din modul live; nu mai interogam ziua de ieri aici.
+  const roDay = (offsetDays: number) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest" }).format(new Date(Date.now() + offsetDays * 86400e3));
+  const days = [0, 1].map(roDay);
   const pairs = codes.flatMap((code) => days.map((day) => ({ code, day })));
 
   let saved = 0;
