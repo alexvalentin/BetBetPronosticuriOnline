@@ -15,7 +15,7 @@ export default async function LoginPage({
 
   return (
     <main className="login">
-      <h1 className="title">Pronosticuri</h1>
+      <h1 className="title">Cinci-Zero</h1>
       {error && ERRORS[error] && <p className="notice" role="alert">{ERRORS[error]}</p>}
 
       {email ? (

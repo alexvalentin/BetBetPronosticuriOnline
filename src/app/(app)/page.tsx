@@ -2,6 +2,7 @@ import { MATCH_EXCLUDED } from "@/lib/football";
 import { createClient } from "@/lib/supabase/server";
 import MatchCard from "@/components/MatchCard";
 import AutoRefresh from "@/components/AutoRefresh";
+import TeamSearch from "@/components/TeamSearch";
 import { dayKey, dayLabel, matchPhase, startOfDayRO } from "@/lib/format";
 import type { Match, Prediction } from "@/lib/types";
 
@@ -22,10 +23,8 @@ export default async function MatchesPage({
   const { data: { user } } = await supabase.auth.getUser();
   const now = Date.now();
 
-  // Afisam doar urmatoarele 3 zile, incepand de azi (indiferent de sursa: football-data.org sau Highlightly)
-  const windowEnd = new Date(now);
-  windowEnd.setHours(23, 59, 59, 999);
-  windowEnd.setDate(windowEnd.getDate() + 2);
+  // Afisam doar ziua curenta si ziua urmatoare (ora Romaniei): limita = inceputul zilei de poimaine
+  const windowEnd = startOfDayRO(startOfDayRO(now) + 49 * 3600e3);
 
   const { data: matches } = await supabase
     .from("matches")
@@ -33,7 +32,7 @@ export default async function MatchesPage({
     .not("league_id", "in", `(${MATCH_EXCLUDED.join(",")})`)
     // Meciurile de azi raman toata ziua (inclusiv cele terminate); cele neterminate (inclusiv "Se verifica") raman pana la 12 ore de la start, ca sa nu dispara intre Meciuri si Istoric
     .or(`kickoff_at.gte.${new Date(startOfDayRO(now)).toISOString()},and(is_finished.eq.false,kickoff_at.gte.${new Date(now - 12 * 3600e3).toISOString()})`)
-    .lte("kickoff_at", windowEnd.toISOString())
+    .lt("kickoff_at", new Date(windowEnd).toISOString())
     .order("kickoff_at", { ascending: true })
     .limit(150)
     .returns<Match[]>();
@@ -61,19 +60,31 @@ export default async function MatchesPage({
     return (phase === "live" || phase === "checking") && now - new Date(m.kickoff_at).getTime() < 6 * 3600e3;
   });
 
+  const teamMap = new Map<string, string>();
+  for (const m of matches ?? []) {
+    teamMap.set(m.home_team, m.league_name);
+    teamMap.set(m.away_team, m.league_name);
+  }
+  const teams = [...teamMap.entries()].map(([name, league]) => ({ name, league })).sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <>
       <AutoRefresh active={active} />
+      <TeamSearch teams={teams} scopeId="match-list" />
       {error && ERRORS[error] && <p className="notice" role="alert">{ERRORS[error]}</p>}
-      {days.size === 0 && <p className="muted">Nu sunt meciuri în programul următoarelor zile.</p>}
+      {days.size === 0 && <p className="muted">Nu sunt meciuri pentru azi și mâine.</p>}
+      <div id="match-list">
       {[...days.entries()].map(([k, list]) => (
-        <section key={k}>
+        <section key={k} data-day>
           <h2 className="day">{dayLabel(list[0].kickoff_at)}</h2>
           {list.map((m) => (
-            <MatchCard key={m.id} match={m} prediction={byMatch.get(m.id)} now={now} />
+            <div key={m.id} data-teams={`${m.home_team}|${m.away_team}`}>
+              <MatchCard match={m} prediction={byMatch.get(m.id)} now={now} />
+            </div>
           ))}
         </section>
       ))}
+      </div>
     </>
   );
 }

@@ -386,3 +386,45 @@ a { color: inherit; }
 .meta .league[data-league="PD"]     { background: #ff4b44; color: #fff; font-weight: 700; } /* La Liga */
 .meta .league[data-league="SA"]     { background: #0032a0; color: #fff; font-weight: 700; }    /* Serie A */
 .meta .league[data-league="241617"] { background: #e30613; color: #fff; font-weight: 700; }    /* Superliga Romaniei */
+
+/* ---- Cautare echipa (Meciuri / Istoric) ---- */
+.tsearch { position: relative; margin: 0 0 14px; }
+.tsearch-box { position: relative; }
+.tsearch-box input {
+  width: 100%;
+  padding: 11px 40px 11px 14px;
+  border: 2px solid var(--pitch-dark);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+.tsearch-box input::-webkit-search-cancel-button { display: none; }
+.tsearch-x {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; border: 0; background: transparent;
+  color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer;
+}
+.tsearch-dd {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+  margin: 0; padding: 0; list-style: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18); overflow: hidden;
+}
+.tsearch-dd button {
+  display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 11px 14px; border: 0; border-bottom: 1px solid var(--line);
+  background: transparent; font: inherit; font-size: 15px; text-align: left; cursor: pointer; color: var(--ink);
+}
+.tsearch-dd li:last-child button { border-bottom: 0; }
+.tsearch-dd button:hover, .tsearch-dd button:focus-visible { background: #eef4f0; }
+.tsearch-dd b { color: var(--pitch-dark); }
+.tsearch-dd small { color: var(--muted); white-space: nowrap; }
+.tsearch-empty { padding: 11px 14px; color: var(--muted); font-size: 14px; }
+.tsearch-chip {
+  margin: 8px 0 0; padding: 6px 10px; border-radius: 10px;
+  background: rgba(240, 196, 25, 0.25); color: var(--pitch-dark); font-size: 13px; font-weight: 600;
+}
+
+[data-teams][hidden], [data-day][hidden] { display: none !important; }

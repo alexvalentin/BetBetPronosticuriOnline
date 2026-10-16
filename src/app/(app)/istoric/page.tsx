@@ -1,6 +1,7 @@
 import { MATCH_EXCLUDED } from "@/lib/football";
 import { createClient } from "@/lib/supabase/server";
 import { dateTimeShort, historyChip } from "@/lib/format";
+import TeamSearch from "@/components/TeamSearch";
 import type { Match } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -22,12 +23,21 @@ export default async function HistoryPage() {
     supabase.from("profiles").select("id, display_name").order("display_name"),
   ]);
 
+  const teamMap = new Map<string, string>();
+  for (const m of matches ?? []) {
+    teamMap.set(m.home_team, m.league_name);
+    teamMap.set(m.away_team, m.league_name);
+  }
+  const teams = [...teamMap.entries()].map(([name, league]) => ({ name, league })).sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <>
       <h1 className="title">Istoric</h1>
+      <TeamSearch teams={teams} scopeId="history-list" />
+      <div id="history-list">
       {(matches ?? []).length === 0 && <p className="muted">Încă nu s-a terminat niciun meci.</p>}
       {(matches ?? []).map((m) => (
-        <article className="match" key={m.id}>
+        <article className="match" key={m.id} data-teams={`${m.home_team}|${m.away_team}`}>
           <div className="meta">
             <span className="league" data-league={m.league_id}>{m.league_name}</span>
           </div>
@@ -70,6 +80,7 @@ export default async function HistoryPage() {
           )}
         </article>
       ))}
+      </div>
     </>
   );
 }

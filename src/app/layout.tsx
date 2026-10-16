@@ -10,10 +10,10 @@ const display = Barlow_Condensed({
 const body = Source_Sans_3({ subsets: ["latin", "latin-ext"], variable: "--font-body" });
 
 export const metadata: Metadata = {
-  title: "Pronosticuri",
+  title: "Cinci-Zero",
   description: "Pronosticuri de fotbal între prieteni",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Pronosticuri", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Cinci-Zero", statusBarStyle: "default" },
   icons: { apple: "/icons/apple-touch-icon.png" },
 };
 

@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <>
       <header className="topbar">
         <div className="topbar-inner">
-          <span className="brand">Pronosticuri</span>
+          <span className="brand">Cinci-Zero</span>
           <form action={signOut} className="who">
             <Link href="/setari">{profile?.display_name}</Link>
             <button className="linkbtn" type="submit">Ieși din cont</button>
