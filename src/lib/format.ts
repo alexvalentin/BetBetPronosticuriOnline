@@ -29,7 +29,7 @@ export const dateTimeShort = (iso: string) =>
 
 const LIVE = new Set([
   "IN_PLAY", "PAUSED", "EXTRA_TIME", "PENALTY_SHOOTOUT", "SUSPENDED", // football-data.org
-  "In Play", "Half Time", "Extra Time", "Penalties", // Highlightly
+  "In Play", "First half", "Second half", "Half Time", "Extra Time", "Penalties", // Highlightly
 ]);
 
 // Faza unui meci, pentru cardul din Meciuri:
