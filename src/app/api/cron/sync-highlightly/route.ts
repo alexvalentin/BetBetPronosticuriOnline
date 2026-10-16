@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LEAGUES, fetchMatchesByDate, fetchStandings, toRow } from "@/lib/highlightly";
+import { syncHighlightlyLive } from "@/lib/sync-live";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -38,33 +39,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ mode, refreshed });
   }
 
-  let days: string[];
-  if (mode === "upcoming") {
-    // Ieri (ca sa prindem scorul final) + azi + urmatoarele 3 zile (rularea de la 00:05 ora Romaniei e inca ziua
-    // anterioara in UTC, deci fara +3 ultima zi afisata pe site ar lipsi)
-    days = [-1, 0, 1, 2, 3].map((i) => new Date(Date.now() + i * 86400e3).toISOString().slice(0, 10));
-  } else {
-    days = [];
+  if (mode === "live") {
+    const force = new URL(req.url).searchParams.get("force") === "1";
+    return NextResponse.json({ mode, ...(await syncHighlightlyLive(db, force)) });
   }
 
-  // Perechi (competitie, zi) de interogat
-  let pairs: { code: string; day: string }[] = [];
-  if (mode === "upcoming") {
-    pairs = codes.flatMap((code) => days.map((day) => ({ code, day })));
-  } else {
-    // live: doar competitiile/zilele in care avem un meci Highlightly inceput si neterminat (ultimele 6 ore)
-    const now = Date.now();
-    const { data } = await db
-      .from("matches")
-      .select("league_id, kickoff_at")
-      .eq("source", "highlightly")
-      .eq("is_finished", false)
-      .lte("kickoff_at", new Date(now).toISOString())
-      .gte("kickoff_at", new Date(now - 6 * 3600e3).toISOString());
-    const keys = new Set((data ?? []).map((r) => `${r.league_id}|${r.kickoff_at.slice(0, 10)}`));
-    pairs = [...keys].map((k) => ({ code: k.split("|")[0], day: k.split("|")[1] }));
-    if (!pairs.length) return NextResponse.json({ skipped: "niciun meci Highlightly in desfasurare" });
-  }
+  // upcoming: ieri (scorul final) + azi + urmatoarele 3 zile (rularea de la 00:05 ora Romaniei e inca ziua
+  // anterioara in UTC, deci fara +3 ultima zi afisata pe site ar lipsi)
+  const days = [-1, 0, 1, 2, 3].map((i) => new Date(Date.now() + i * 86400e3).toISOString().slice(0, 10));
+  const pairs = codes.flatMap((code) => days.map((day) => ({ code, day })));
 
   let saved = 0;
   for (const { code, day } of pairs) {

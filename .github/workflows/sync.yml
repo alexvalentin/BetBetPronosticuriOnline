@@ -2,9 +2,13 @@ name: Sincronizare meciuri
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # scoruri live (ambele surse): 1-2 request-uri cand nu se joaca nimic
-    - cron: "5 21 * * *"     # program + inchidere meciuri de ieri: 00:05 ora Romaniei (vara). Dupa 25 oct: "5 22 * * *"
-    - cron: "10 22 * * *"    # tabele: 01:10 ora Romaniei (vara), la 10 min dupa ora fixa ca sa nu se ciocneasca cu live. Dupa 25 oct: "10 23 * * *"
+    # Bucla live (3 pornii pe zi, fiecare job ruleaza o bucla de apeluri la 10 minute, vezi jobul "live-loop").
+    # Jobul de dupa le asteapta pe cele dinainte (concurrency), deci feliile se leaga fara goluri.
+    - cron: "0 9 * * *"     # 12:00 ora Romaniei (vara): bucla pana la 16:30
+    - cron: "0 13 * * *"    # 16:00: bucla pana la 20:30 (porneste cand se termina cea dinainte)
+    - cron: "0 17 * * *"    # 20:00: bucla pana la 01:00
+    - cron: "5 21 * * *"    # program + inchidere meciuri de ieri: 00:05 ora Romaniei (vara). Dupa 25 oct: "5 22 * * *"
+    - cron: "10 22 * * *"   # tabele: 01:10 ora Romaniei (vara). Dupa 25 oct: "10 23 * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -12,7 +16,9 @@ on:
         default: "upcoming"
 
 jobs:
+  # Rulari punctuale: program, tabele sau o rulare manuala
   sync:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '5 21 * * *' || github.event.schedule == '10 22 * * *' }}
     runs-on: ubuntu-latest
     steps:
       - name: Sincronizare football-data.org
@@ -25,8 +31,9 @@ jobs:
           MODE=live
           if [ "$SCHEDULE" = "5 21 * * *" ]; then MODE=upcoming; fi
           if [ "$SCHEDULE" = "10 22 * * *" ]; then MODE=standings; fi
-          if [ -n "$INPUT_MODE" ]; then MODE="$INPUT_MODE"; fi
-          curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync?mode=$MODE"
+          EXTRA=""
+          if [ -n "$INPUT_MODE" ]; then MODE="$INPUT_MODE"; EXTRA="&force=1"; fi
+          curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync?mode=$MODE$EXTRA"
       - name: Sincronizare Highlightly (Liga 1/2, EL, ECL, Nations League)
         if: ${{ !cancelled() }}
         env:
@@ -38,5 +45,41 @@ jobs:
           MODE=live
           if [ "$SCHEDULE" = "5 21 * * *" ]; then MODE=upcoming; fi
           if [ "$SCHEDULE" = "10 22 * * *" ]; then MODE=standings; fi
-          if [ -n "$INPUT_MODE" ]; then MODE="$INPUT_MODE"; fi
-          curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync-highlightly?mode=$MODE"
+          EXTRA=""
+          if [ -n "$INPUT_MODE" ]; then MODE="$INPUT_MODE"; EXTRA="&force=1"; fi
+          curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync-highlightly?mode=$MODE$EXTRA"
+
+  # Un singur job pornit de cron, care apeleaza sincronizarea live la fiecare 10 minute pana la ora de final (ora Romaniei)
+  live-loop:
+    if: ${{ github.event_name == 'schedule' && (github.event.schedule == '0 9 * * *' || github.event.schedule == '0 13 * * *' || github.event.schedule == '0 17 * * *') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    concurrency:
+      group: live-loop
+      cancel-in-progress: false
+    steps:
+      - name: Bucla live
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          case "$SCHEDULE" in
+            "0 9 * * *")  END_HM="16:30" ;;
+            "0 13 * * *") END_HM="20:30" ;;
+            *)            END_HM="01:00" ;;
+          esac
+          # Urmatoarea aparitie a orei de final, in ora Romaniei (corect si la ora de iarna)
+          now=$(date +%s)
+          end=$(TZ=Europe/Bucharest date -d "$END_HM" +%s)
+          if [ "$end" -le "$now" ]; then end=$((end + 86400)); fi
+          # Daca pornirea a intarziat atat de mult incat ora de final e peste 6 ore, nu mai are rost
+          if [ $((end - now)) -gt 21600 ]; then echo "Pornire prea tarziu pentru aceasta felie, ies."; exit 0; fi
+          echo "Bucla pana la $END_HM ora Romaniei ($((end - now)) secunde)"
+          while [ "$(date +%s)" -lt "$end" ]; do
+            curl -sS --max-time 55 -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync?mode=live" || echo "football-data: eroare"
+            echo
+            curl -sS --max-time 55 -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/sync-highlightly?mode=live" || echo "highlightly: eroare"
+            echo
+            sleep 600
+          done

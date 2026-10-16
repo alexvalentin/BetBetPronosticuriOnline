@@ -1,7 +1,8 @@
 import { MATCH_EXCLUDED } from "@/lib/football";
 import { createClient } from "@/lib/supabase/server";
 import MatchCard from "@/components/MatchCard";
-import { dayKey, dayLabel, startOfDayRO } from "@/lib/format";
+import AutoRefresh from "@/components/AutoRefresh";
+import { dayKey, dayLabel, matchPhase, startOfDayRO } from "@/lib/format";
 import type { Match, Prediction } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -54,8 +55,15 @@ export default async function MatchesPage({
     days.set(k, [...(days.get(k) ?? []), m]);
   }
 
+  // Exista un meci in desfasurare (sau neconfirmat inca) in ultimele 6 ore? Atunci pagina cere reimprospatari.
+  const active = (matches ?? []).some((m) => {
+    const phase = matchPhase(m, now);
+    return (phase === "live" || phase === "checking") && now - new Date(m.kickoff_at).getTime() < 6 * 3600e3;
+  });
+
   return (
     <>
+      <AutoRefresh active={active} />
       {error && ERRORS[error] && <p className="notice" role="alert">{ERRORS[error]}</p>}
       {days.size === 0 && <p className="muted">Nu sunt meciuri în programul următoarelor zile.</p>}
       {[...days.entries()].map(([k, list]) => (
