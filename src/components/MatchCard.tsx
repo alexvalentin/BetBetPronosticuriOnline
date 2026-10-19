@@ -23,8 +23,8 @@ export default function MatchCard({
   now: number;
 }) {
   const kickoff = new Date(match.kickoff_at).getTime();
-  const open = !match.is_finished && kickoff > now;
   const phase = matchPhase(match, now);
+  const open = !match.is_finished && phase !== "off" && kickoff > now;
   const chip = pointsChip(prediction?.points ?? null);
 
   return (
@@ -39,6 +39,11 @@ export default function MatchCard({
         )}
         {phase === "finished" && <span className="finished-badge">Terminat</span>}
         {phase === "checking" && <span className="check-badge">Se verifică</span>}
+        {phase === "off" && (
+          <span className="postponed-badge">
+            {match.status === "POSTPONED" || match.status === "Postponed" ? "Amânat" : "Anulat"}
+          </span>
+        )}
         {match.round && <span>{match.round}</span>}
         <span>{dateLabel(match.kickoff_at)} · {timeLabel(match.kickoff_at)}</span>
       </div>
