@@ -19,13 +19,23 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0F3D28",
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ro" className={`${display.variable} ${body.variable}`}>
+    <html lang="ro" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
+      <head>
+        {/* seteaza tema inainte de afisare, ca sa nu apara o clipire alba */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}',
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

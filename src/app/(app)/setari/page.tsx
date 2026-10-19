@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { updateDisplayName } from "@/app/actions";
+import ThemeSetting from "@/components/ThemeSetting";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,8 @@ export default async function SetariPage({
         <p className="muted small">Apare în loc de email, pe Clasament, Istoric și la meciuri.</p>
         <button className="btn" type="submit">Salvează</button>
       </form>
+
+      <ThemeSetting />
     </>
   );
 }

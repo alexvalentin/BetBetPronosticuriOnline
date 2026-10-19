@@ -9,6 +9,64 @@
   --panel: #0b2a1b;
   --gold: #f0c419;
   --red: #c1432f;
+  /* culori pentru chip-uri, insigne si zone luminate (se schimba in modul intunecat) */
+  --ok-bg: #d5ebdd;
+  --ok-fg: #14502f;
+  --bad-bg: #f3d9d3;
+  --bad-fg: #7a2417;
+  --warn-bg: #fbefb8;
+  --warn-fg: #6b5200;
+  --neutral-bg: #e4e9e6;
+  --accent-text: #0f3d28;
+  --hover: #eef4f0;
+  --input-bg: #ffffff;
+  --logo-shadow: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+  --badge-ring: transparent;
+  color-scheme: light;
+}
+
+/* Tema intunecata: manual (data-theme="dark") sau automat, dupa setarea telefonului */
+:root[data-theme="dark"] {
+  --bg: #0c1712;
+  --surface: #15241c;
+  --ink: #e6efe9;
+  --muted: #9bb0a5;
+  --line: #28443a;
+  --ok-bg: #1d4630;
+  --ok-fg: #b7e4c9;
+  --bad-bg: #4a2018;
+  --bad-fg: #f5b9ab;
+  --warn-bg: #4d4310;
+  --warn-fg: #f1dc7a;
+  --neutral-bg: #243a2f;
+  --accent-text: #8fd3ac;
+  --hover: #1d3328;
+  --input-bg: #15241c;
+  --logo-shadow: drop-shadow(0 0 1px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.25));
+  --badge-ring: rgba(255, 255, 255, 0.35);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1712;
+    --surface: #15241c;
+    --ink: #e6efe9;
+    --muted: #9bb0a5;
+    --line: #28443a;
+    --ok-bg: #1d4630;
+    --ok-fg: #b7e4c9;
+    --bad-bg: #4a2018;
+    --bad-fg: #f5b9ab;
+    --warn-bg: #4d4310;
+    --warn-fg: #f1dc7a;
+    --neutral-bg: #243a2f;
+    --accent-text: #8fd3ac;
+    --hover: #1d3328;
+    --input-bg: #15241c;
+    --logo-shadow: drop-shadow(0 0 1px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.25));
+    --badge-ring: rgba(255, 255, 255, 0.35);
+    color-scheme: dark;
+  }
 }
 
 * { box-sizing: border-box; }
@@ -86,8 +144,8 @@ a { color: inherit; }
 .muted { color: var(--muted); }
 .small { font-size: 0.85rem; }
 .notice {
-  background: #f3d9d3;
-  color: #7a2417;
+  background: var(--bad-bg);
+  color: var(--bad-fg);
   border-radius: 10px;
   padding: 10px 14px;
   font-weight: 600;
@@ -109,6 +167,7 @@ a { color: inherit; }
   font-weight: 600;
   padding: 2px 10px;
   border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--badge-ring);
 }
 
 .board {
@@ -136,7 +195,7 @@ a { color: inherit; }
 .team img,
 .picks img,
 .teamcell img {
-  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+  filter: var(--logo-shadow);
   border-radius: 2px;
 }
 
@@ -207,9 +266,9 @@ a { color: inherit; }
   font-size: 0.85rem;
 }
 .chip.exact { background: var(--gold); color: #3b2f00; }
-.chip.ok { background: #d5ebdd; color: var(--pitch-dark); }
-.chip.miss { background: #f3d9d3; color: #7a2417; }
-.chip.pending { background: #e4e9e6; color: var(--muted); }
+.chip.ok { background: var(--ok-bg); color: var(--ok-fg); }
+.chip.miss { background: var(--bad-bg); color: var(--bad-fg); }
+.chip.pending { background: var(--neutral-bg); color: var(--muted); }
 
 /* Clasament */
 .tablewrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
@@ -226,7 +285,7 @@ a { color: inherit; }
 .result { margin: 26px 0 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
 .result b { font-family: var(--font-display), sans-serif; font-size: 30.4px; padding: 0 4px; line-height: 1.1; }
 .result .team { font-size: 14.8px; } /* doar in Istoric; pe Meciuri ramane 0.8rem */
-.result img { vertical-align: middle; filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 2px rgba(0, 0, 0, 0.4)); border-radius: 2px; }
+.result img { vertical-align: middle; filter: var(--logo-shadow); border-radius: 2px; }
 .result .score { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; position: relative; top: -10px; }
 .result .when { font-size: 13.2px; font-weight: 500; color: var(--muted); white-space: nowrap; }
 .fade-line { height: 1px; margin: 16px 0 14px; background: linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent); }
@@ -236,9 +295,9 @@ a { color: inherit; }
 .pick-result { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px 8px; }
 .pick-score { font-size: 0.9rem; white-space: nowrap; }
 .hchip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
-.hchip.h-exact { background: #d5ebdd; color: #14502f; }
-.hchip.h-ok { background: #fbefb8; color: #6b5200; }
-.hchip.h-miss { background: #f3d9d3; color: #7a2417; }
+.hchip.h-exact { background: var(--ok-bg); color: var(--ok-fg); }
+.hchip.h-ok { background: var(--warn-bg); color: var(--warn-fg); }
+.hchip.h-miss { background: var(--bad-bg); color: var(--bad-fg); }
 @media (max-width: 420px) {
   .result .when { font-size: 12.2px; }
   .pick-user { font-size: 0.76rem; }
@@ -257,7 +316,8 @@ a { color: inherit; }
   border-radius: 10px;
   font: inherit;
   font-size: 1.1rem;
-  background: #fff;
+  background: var(--input-bg);
+  color: var(--ink);
 }
 
 /* Meniu cu 4 optiuni */
@@ -309,15 +369,15 @@ a { color: inherit; }
 .settings-form { max-width: 380px; margin-top: 10px; }
 .settings-form label { display: block; font-weight: 600; margin-bottom: 6px; }
 .settings-form .muted { margin: 8px 0 16px; }
-.notice-ok { background: #d5ebdd; color: var(--pitch-dark); }
+.notice-ok { background: var(--ok-bg); color: var(--ok-fg); }
 
 /* Buton Salveaza/Editeaza + mesaj temporar dupa salvare */
 .save-btn-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .saved-flash {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--pitch-dark);
-  background: #d5ebdd;
+  color: var(--ok-fg);
+  background: var(--ok-bg);
   padding: 2px 10px;
   border-radius: 999px;
   animation: saved-fade 2.5s ease forwards;
@@ -360,8 +420,8 @@ a { color: inherit; }
 .finished-badge {
   display: inline-flex;
   align-items: center;
-  background: #f3d9d3;
-  color: #7a2417;
+  background: var(--bad-bg);
+  color: var(--bad-fg);
   font-weight: 700;
   font-size: 0.75rem;
   letter-spacing: 0.04em;
@@ -371,7 +431,7 @@ a { color: inherit; }
 .check-badge {
   display: inline-flex;
   align-items: center;
-  background: #e4e9e6;
+  background: var(--neutral-bg);
   color: var(--muted);
   font-weight: 700;
   font-size: 0.75rem;
@@ -393,7 +453,7 @@ a { color: inherit; }
 .tsearch-box input {
   width: 100%;
   padding: 11px 40px 11px 14px;
-  border: 2px solid var(--pitch-dark);
+  border: 2px solid var(--accent-text);
   border-radius: 12px;
   background: var(--surface);
   color: var(--ink);
@@ -418,13 +478,24 @@ a { color: inherit; }
   background: transparent; font: inherit; font-size: 15px; text-align: left; cursor: pointer; color: var(--ink);
 }
 .tsearch-dd li:last-child button { border-bottom: 0; }
-.tsearch-dd button:hover, .tsearch-dd button:focus-visible { background: #eef4f0; }
-.tsearch-dd b { color: var(--pitch-dark); }
+.tsearch-dd button:hover, .tsearch-dd button:focus-visible { background: var(--hover); }
+.tsearch-dd b { color: var(--accent-text); }
 .tsearch-dd small { color: var(--muted); white-space: nowrap; }
 .tsearch-empty { padding: 11px 14px; color: var(--muted); font-size: 14px; }
 .tsearch-chip {
   margin: 8px 0 0; padding: 6px 10px; border-radius: 10px;
-  background: rgba(240, 196, 25, 0.25); color: var(--pitch-dark); font-size: 13px; font-weight: 600;
+  background: rgba(240, 196, 25, 0.25); color: var(--accent-text); font-size: 13px; font-weight: 600;
 }
 
 [data-teams][hidden], [data-day][hidden] { display: none !important; }
+
+/* Alegerea temei (Setari) */
+.theme-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-top: 6px; }
+.theme-seg button {
+  border: 0; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600;
+  padding: 10px 16px; min-height: 44px; cursor: pointer;
+}
+.theme-seg button + button { border-left: 1px solid var(--line); }
+.theme-seg button[aria-pressed="true"] { background: var(--pitch); color: #fff; }
+.theme-form { max-width: 380px; margin-top: 26px; }
+.theme-form > label { display: block; font-weight: 600; }
