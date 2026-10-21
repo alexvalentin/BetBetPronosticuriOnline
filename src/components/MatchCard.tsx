@@ -111,11 +111,21 @@ export default function MatchCard({
           <div className="board-foot">
             {real ? (
               <span className="footscore">
-                {real.live && <span className="live-dot" aria-hidden="true" />}
-                {real.final && <span className="finished-dot" aria-hidden="true" />}
-                <span className="footscore-label">{real.label}</span>
-                <b>{real.home}:{real.away}</b>
-                {real.final && <small className="muted">(90 min)</small>}
+                {real.live ? (
+                  <span className="live-badge" role="status">
+                    <span className="live-dot" aria-hidden="true" />
+                    {real.label.toUpperCase()} {real.home}:{real.away}
+                  </span>
+                ) : real.final ? (
+                  <span className="finished-badge" role="status" title="Scorul după 90 de minute">
+                    <span className="finished-dot" aria-hidden="true" />
+                    {real.label.toUpperCase()} {real.home}:{real.away}
+                  </span>
+                ) : (
+                  <span className="check-badge" role="status">
+                    {real.label.toUpperCase()} {real.home}:{real.away}
+                  </span>
+                )}
                 {!prediction && <span className="muted"> – fără pronostic</span>}
               </span>
             ) : (
