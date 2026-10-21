@@ -27,6 +27,13 @@ export default function MatchCard({
   const open = !match.is_finished && phase !== "off" && kickoff > now;
   const chip = pointsChip(prediction?.points ?? null);
   const score = phase === "live" || phase === "checking" ? liveScore(match) : null;
+  // scorul real afisat sub pronostic: final (dupa 90 min), live sau ultimul scor cunoscut
+  const real =
+    match.is_finished && match.home_goals !== null && match.away_goals !== null
+      ? { home: match.home_goals, away: match.away_goals, label: "Rezultat final · 90 min", live: false }
+      : score
+        ? { ...score, label: phase === "live" ? "Scor live" : "Ultimul scor", live: phase === "live" }
+        : null;
 
   return (
     <article className="match">
@@ -94,31 +101,21 @@ export default function MatchCard({
               <b>{prediction ? prediction.away_goals : "–"}</b>
             </div>
             <small className="predlabel">Pronosticul tău</small>
+            {real && (
+              <div className="realscore" role="status">
+                <span className="realscore-digits">
+                  <b>{real.home}</b>
+                  <i aria-hidden="true">:</i>
+                  <b>{real.away}</b>
+                </span>
+                <small className="predlabel">
+                  {real.live && <span className="live-dot" aria-hidden="true" />}
+                  {real.label}
+                </small>
+              </div>
+            )}
           </div>
           <Team name={match.away_team} logo={match.away_logo} away />
-          {score && (
-            <div className={`scoreline ${phase === "live" ? "is-live" : "is-last"}`} role="status">
-              <span className="scoreline-label">
-                {phase === "live" && <span className="live-dot" aria-hidden="true" />}
-                {phase === "live" ? "Scor live" : "Ultimul scor"}
-              </span>
-              <span className="scoreline-digits">
-                <b>{score.home}</b>
-                <i aria-hidden="true">:</i>
-                <b>{score.away}</b>
-              </span>
-            </div>
-          )}
-          {match.is_finished && match.home_goals !== null && match.away_goals !== null && (
-            <div className="scoreline is-final" role="status">
-              <span className="scoreline-label">Rezultat final · 90 min</span>
-              <span className="scoreline-digits">
-                <b>{match.home_goals}</b>
-                <i aria-hidden="true">:</i>
-                <b>{match.away_goals}</b>
-              </span>
-            </div>
-          )}
           <div className="board-foot">
             <span className="muted">
               {statusLabel(match, now)}

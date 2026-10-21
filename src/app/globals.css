@@ -510,42 +510,18 @@ a { color: inherit; }
 .theme-form { max-width: 380px; margin-top: 26px; }
 .theme-form > label { display: block; font-weight: 600; }
 
-/* Scor live / rezultat final pe cardul meciului */
+/* Scor live / rezultat final, sub pronostic */
 .predwrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.predlabel { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
-.scoreline {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 4px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: var(--ok-bg);
-  color: var(--ok-fg);
-}
-.scoreline-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.scoreline-digits { display: inline-flex; align-items: center; gap: 6px; }
-.scoreline-digits b {
-  min-width: 36px;
-  padding: 2px 8px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.18);
+.predlabel {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted);
   text-align: center;
-  font-family: var(--font-display), sans-serif;
-  font-size: 1.9rem;
-  line-height: 1.15;
 }
-.scoreline-digits i { font-style: normal; font-weight: 700; opacity: 0.7; }
-.scoreline.is-last, .scoreline.is-final { background: var(--neutral-bg); color: var(--ink); }
-.scoreline.is-final .scoreline-digits b { background: var(--pitch-dark); color: #fff; }
-:root:not([data-theme="dark"]) .scoreline.is-live .scoreline-digits b { background: rgba(255, 255, 255, 0.65); }
+.realscore { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 8px; }
+.realscore-digits { display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; border-radius: 8px; background: var(--pitch-dark); }
+.realscore-digits b {
+  min-width: 30px; height: 38px; display: grid; place-items: center; border-radius: 5px;
+  background: var(--panel); color: #fff;
+  font-family: var(--font-display), sans-serif; font-size: 1.7rem; line-height: 1;
+}
+.realscore-digits i { font-style: normal; font-weight: 700; color: #7fa894; }
