@@ -35,9 +35,9 @@ export async function syncFootballLive(db: SupabaseClient, force = false): Promi
   if (!count) return { skipped: "niciun meci football-data in desfasurare", saved: 0 };
   if (!force && (await recentlyUpdated(db, "football-data"))) return { throttled: true, saved: 0 };
 
-  // ieri + azi, cu toate statusurile: prindem si meciul tocmai terminat, care nu mai apare in lista "in desfasurare"
+  // ieri + azi (+ maine, ca sa nu depindem de cum trateaza API-ul data de final), cu toate statusurile: prindem si meciul tocmai terminat, care nu mai apare in lista "in desfasurare"
   const day = (offset: number) => new Date(now + offset * 86400e3).toISOString().slice(0, 10);
-  const matches = await fetchMatchesByDateRange(day(-1), day(0));
+  const matches = await fetchMatchesByDateRange(day(-1), day(1));
   const rows = [...new Map(matches.map(footballRow).map((r) => [r.id, r])).values()];
   if (rows.length) {
     const { error } = await db.from("matches").upsert(rows, { onConflict: "id" });
