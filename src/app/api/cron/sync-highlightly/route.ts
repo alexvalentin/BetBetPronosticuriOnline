@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LEAGUES, fetchMatchesByDate, fetchStandings, toRow } from "@/lib/highlightly";
 import { syncHighlightlyLive } from "@/lib/sync-live";
+import { MATCH_EXCLUDED } from "@/lib/football";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// mode=upcoming  -> azi + maine (ora Romaniei), pentru fiecare din cele 5 competitii: 10 request-uri
+// mode=upcoming  -> azi + maine (ora Romaniei), pentru fiecare competitie cu meciuri (fara Liga 2): 8 request-uri
 // mode=live      -> doar perechile competitie+zi cu un meci inceput si neterminat in baza noastra: 0-cateva request-uri
 // mode=standings -> o data pe zi, cate un request per competitie: 5 request-uri
 // Total pe zi, in cel mai incarcat caz: ~10 + live + 5, mult sub limita de 100 a acestui API.
@@ -49,7 +50,7 @@ export async function GET(req: Request) {
   const roDay = (offsetDays: number) =>
     new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest" }).format(new Date(Date.now() + offsetDays * 86400e3));
   const days = [0, 1].map(roDay);
-  const pairs = codes.flatMap((code) => days.map((day) => ({ code, day })));
+  const pairs = codes.filter((c) => !MATCH_EXCLUDED.includes(c)).flatMap((code) => days.map((day) => ({ code, day })));
 
   let saved = 0;
   for (const { code, day } of pairs) {

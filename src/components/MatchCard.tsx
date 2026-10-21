@@ -1,6 +1,6 @@
 import { savePrediction } from "@/app/actions";
 import type { Match, Prediction } from "@/lib/types";
-import { dateLabel, matchPhase, pointsChip, statusLabel, timeLabel } from "@/lib/format";
+import { dateLabel, liveScore, matchPhase, pointsChip, statusLabel, timeLabel } from "@/lib/format";
 import SaveButton from "@/components/SaveButton";
 
 function Team({ name, logo, away }: { name: string; logo: string | null; away?: boolean }) {
@@ -26,6 +26,7 @@ export default function MatchCard({
   const phase = matchPhase(match, now);
   const open = !match.is_finished && phase !== "off" && kickoff > now;
   const chip = pointsChip(prediction?.points ?? null);
+  const score = phase === "live" || phase === "checking" ? liveScore(match) : null;
 
   return (
     <article className="match">
@@ -92,9 +93,14 @@ export default function MatchCard({
             <b>{prediction ? prediction.away_goals : "–"}</b>
           </div>
           <Team name={match.away_team} logo={match.away_logo} away />
+          {score && (
+            <div className="livescore" role="status">
+              {phase === "live" ? "Scor live" : "Ultimul scor"} <b>{score.home}:{score.away}</b>
+            </div>
+          )}
           <div className="board-foot">
             <span className="muted">
-              {statusLabel(match)}
+              {statusLabel(match, now)}
               {match.is_finished && ` – rezultat după 90 min ${match.home_goals}:${match.away_goals}`}
               {!prediction && " – fără pronostic"}
             </span>

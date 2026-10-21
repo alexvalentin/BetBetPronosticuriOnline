@@ -12,6 +12,7 @@ export type Match = {
   is_finished: boolean;
   home_goals: number | null;
   away_goals: number | null;
+  raw?: unknown; // raspunsul complet al API-ului (contine scorul curent in timpul meciului)
 };
 
 export type Prediction = {

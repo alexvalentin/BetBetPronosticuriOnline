@@ -98,3 +98,21 @@ export function startOfDayRO(now: number) {
   }
   return utcMidnight - 3 * 3600e3;
 }
+
+/** Scorul curent din raspunsul API-ului (doar cat timp meciul nu e marcat terminat). */
+export function liveScore(m: Match): { home: number; away: number } | null {
+  const r = m.raw as {
+    state?: { score?: { current?: string | null } };
+    score?: { fullTime?: { home: number | null; away: number | null } };
+  } | null | undefined;
+  if (!r) return null;
+  if (["Not started", "SCHEDULED", "TIMED"].includes(m.status)) return null; // meciul nu a inceput inca
+  const hl = r.state?.score?.current;
+  if (hl) {
+    const [h, a] = hl.split(" - ").map((n) => parseInt(n, 10));
+    return Number.isNaN(h) || Number.isNaN(a) ? null : { home: h, away: a };
+  }
+  const ft = r.score?.fullTime;
+  if (ft && ft.home !== null && ft.away !== null) return { home: ft.home, away: ft.away };
+  return null;
+}

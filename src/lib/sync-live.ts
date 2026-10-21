@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchMatchesByDateRange, toRow as footballRow } from "./football";
 import { fetchMatchesByDate, toRow as highlightlyRow } from "./highlightly";
+import { MATCH_EXCLUDED } from "@/lib/football";
 
 // Sincronizarea "live", folosita si de joburile cron, si de reimprospatarea la vizita (/api/refresh).
 // Oricine o declanseaza, ea se opreste singura daca:
@@ -53,6 +54,7 @@ export async function syncHighlightlyLive(db: SupabaseClient, force = false): Pr
     .from("matches")
     .select("league_id, kickoff_at")
     .eq("source", "highlightly")
+    .not("league_id", "in", `(${MATCH_EXCLUDED.join(",")})`)
     .eq("is_finished", false)
     .lte("kickoff_at", new Date(now).toISOString())
     .gte("kickoff_at", new Date(now - WINDOW_MS).toISOString());
