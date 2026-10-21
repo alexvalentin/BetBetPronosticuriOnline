@@ -87,21 +87,41 @@ export default function MatchCard({
       ) : (
         <div className="board">
           <Team name={match.home_team} logo={match.home_logo} />
-          <div className="digits static" aria-label="Pronosticul tău">
-            <b>{prediction ? prediction.home_goals : "–"}</b>
-            <span aria-hidden="true">:</span>
-            <b>{prediction ? prediction.away_goals : "–"}</b>
+          <div className="predwrap">
+            <div className="digits static" aria-label="Pronosticul tău">
+              <b>{prediction ? prediction.home_goals : "–"}</b>
+              <span aria-hidden="true">:</span>
+              <b>{prediction ? prediction.away_goals : "–"}</b>
+            </div>
+            <small className="predlabel">Pronosticul tău</small>
           </div>
           <Team name={match.away_team} logo={match.away_logo} away />
           {score && (
-            <div className="livescore" role="status">
-              {phase === "live" ? "Scor live" : "Ultimul scor"} <b>{score.home}:{score.away}</b>
+            <div className={`scoreline ${phase === "live" ? "is-live" : "is-last"}`} role="status">
+              <span className="scoreline-label">
+                {phase === "live" && <span className="live-dot" aria-hidden="true" />}
+                {phase === "live" ? "Scor live" : "Ultimul scor"}
+              </span>
+              <span className="scoreline-digits">
+                <b>{score.home}</b>
+                <i aria-hidden="true">:</i>
+                <b>{score.away}</b>
+              </span>
+            </div>
+          )}
+          {match.is_finished && match.home_goals !== null && match.away_goals !== null && (
+            <div className="scoreline is-final" role="status">
+              <span className="scoreline-label">Rezultat final · 90 min</span>
+              <span className="scoreline-digits">
+                <b>{match.home_goals}</b>
+                <i aria-hidden="true">:</i>
+                <b>{match.away_goals}</b>
+              </span>
             </div>
           )}
           <div className="board-foot">
             <span className="muted">
               {statusLabel(match, now)}
-              {match.is_finished && ` – rezultat după 90 min ${match.home_goals}:${match.away_goals}`}
               {!prediction && " – fără pronostic"}
             </span>
             {chip && <span className={`chip ${chip.tone}`}>{chip.text}</span>}
