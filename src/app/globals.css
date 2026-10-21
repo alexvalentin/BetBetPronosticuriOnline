@@ -510,18 +510,20 @@ a { color: inherit; }
 .theme-form { max-width: 380px; margin-top: 26px; }
 .theme-form > label { display: block; font-weight: 600; }
 
-/* Scor live / rezultat final, sub pronostic */
-.predwrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+/* Eticheta pronosticului (deasupra scorului, fara sa-l mute pe verticala) */
+.predwrap { position: relative; display: flex; flex-direction: column; align-items: center; }
 .predlabel {
-  display: inline-flex; align-items: center; gap: 6px;
+  position: absolute; bottom: calc(100% + 3px); left: 50%; transform: translateX(-50%);
   font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted);
-  text-align: center;
+  white-space: nowrap;
 }
-.realscore { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 8px; }
-.realscore-digits { display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; border-radius: 8px; background: var(--pitch-dark); }
-.realscore-digits b {
-  min-width: 30px; height: 38px; display: grid; place-items: center; border-radius: 5px;
-  background: var(--panel); color: #fff;
-  font-family: var(--font-display), sans-serif; font-size: 1.7rem; line-height: 1;
-}
-.realscore-digits i { font-style: normal; font-weight: 700; color: #7fa894; }
+.board:has(.predwrap) { margin-top: 26px; }
+
+/* Insigna TERMINAT, ca LIVE dar rosie */
+.finished-badge { gap: 6px; letter-spacing: 0.06em; padding: 2px 10px 2px 8px; }
+.finished-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; flex: none; }
+
+/* Scor live / final in rand cu starea meciului (jos) */
+.footscore { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 7px; }
+.footscore-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.footscore b { font-family: var(--font-display), sans-serif; font-size: 1.5rem; line-height: 1; color: var(--ink); }
