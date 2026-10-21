@@ -9,14 +9,20 @@ const ERRORS: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string; error?: string }>;
+  searchParams: Promise<{ email?: string; error?: string; notice?: string }>;
 }) {
-  const { email, error } = await searchParams;
+  const { email, error, notice } = await searchParams;
 
   return (
     <main className="login">
       <h1 className="title">Cinci-Zero</h1>
       {error && ERRORS[error] && <p className="notice" role="alert">{ERRORS[error]}</p>}
+
+      {email && notice === "limit" && (
+        <p className="notice notice-ok">
+          Ai cerut deja un cod acum câteva momente, iar un cod nou nu se poate trimite încă. Folosește ultimul cod primit pe email sau așteaptă un minut și cere altul.
+        </p>
+      )}
 
       {email ? (
         <form action={verifyCode}>

@@ -16,7 +16,15 @@ export async function requestCode(formData: FormData) {
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
-  if (error) redirect("/login?error=send");
+  if (error) {
+    // Eroarea reala ramane in logurile Vercel; utilizatorului ii afisam un mesaj clar.
+    console.error("signInWithOtp", error.status, error.code, error.message);
+    // Limita de emailuri atinsa: un cod trimis recent e inca valabil, deci mergem la pagina de introducere a codului.
+    const limited =
+      error.status === 429 || /rate.?limit|security purposes|only request this/i.test(`${error.code ?? ""} ${error.message}`);
+    if (limited) redirect(`/login?email=${encodeURIComponent(email)}&notice=limit`);
+    redirect("/login?error=send");
+  }
 
   redirect(`/login?email=${encodeURIComponent(email)}`);
 }
