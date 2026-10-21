@@ -524,6 +524,9 @@ a { color: inherit; }
 .finished-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; flex: none; }
 
 /* Scor live / final in rand cu starea meciului (jos): aceeasi insigna ca LIVE / TERMINAT */
-.board:has(.predwrap) .board-foot { margin-top: 8px; }
+.board:has(.predwrap) .board-foot { margin-top: 16px; } /* Meciuri: +8px pe PC */
+@media (max-width: 520px) {
+  .board:has(.predwrap) .board-foot { margin-top: 12px; } /* +4px pe telefon */
+}
 .footscore { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
 .footscore .live-badge, .footscore .finished-badge, .footscore .check-badge { font-size: 0.75rem; letter-spacing: 0.06em; }
