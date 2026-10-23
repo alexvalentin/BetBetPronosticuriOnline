@@ -1,4 +1,4 @@
--- Ruleaza DOAR daca ai rulat deja schema.sql inainte de pagina "Tabele".
+-- Ruleaza DOAR daca ai rulat deja schema.sql inainte de pagina "Clasamente".
 create table public.standings (
   league_id int not null,
   season int not null,

@@ -60,7 +60,7 @@ async function fetchStandingsGroups(leagueId: string): Promise<HStandingsRespons
 }
 
 // Normalizam in acelasi format StandingRow[][] folosit si de football-data.org,
-// ca pagina Tabele sa nu aiba nevoie de cod separat pentru fiecare sursa.
+// ca pagina Clasamente sa nu aiba nevoie de cod separat pentru fiecare sursa.
 export async function fetchStandings(leagueId: string) {
   const groups = await fetchStandingsGroups(leagueId);
   return groups.map((g) =>

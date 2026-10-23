@@ -32,7 +32,7 @@ export default async function HistoryPage() {
 
   return (
     <>
-      <h1 className="title">Istoric</h1>
+      <h1 className="title">Rezultate</h1>
       <TeamSearch teams={teams} scopeId="history-list" />
       <div id="history-list">
       {(matches ?? []).length === 0 && <p className="muted">Încă nu s-a terminat niciun meci.</p>}

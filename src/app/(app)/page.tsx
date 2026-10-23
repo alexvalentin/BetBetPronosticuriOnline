@@ -30,7 +30,7 @@ export default async function MatchesPage({
     .from("matches")
     .select("*")
     .not("league_id", "in", `(${MATCH_EXCLUDED.join(",")})`)
-    // Meciurile de azi raman toata ziua (inclusiv cele terminate); cele neterminate (inclusiv "Se verifica") raman pana la 12 ore de la start, ca sa nu dispara intre Meciuri si Istoric
+    // Meciurile de azi raman toata ziua (inclusiv cele terminate); cele neterminate (inclusiv "Se verifica") raman pana la 12 ore de la start, ca sa nu dispara intre Meciuri si Rezultate
     .or(`kickoff_at.gte.${new Date(startOfDayRO(now)).toISOString()},and(is_finished.eq.false,kickoff_at.gte.${new Date(now - 12 * 3600e3).toISOString()})`)
     .lt("kickoff_at", new Date(windowEnd).toISOString())
     .order("kickoff_at", { ascending: true })

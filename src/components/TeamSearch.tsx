@@ -7,7 +7,7 @@ export type TeamOption = { name: string; league: string };
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
 /**
- * Cautare de echipa pentru Meciuri / Istoric.
+ * Cautare de echipa pentru Meciuri / Rezultate.
  * Filtreaza direct in pagina elementele cu data-teams="Echipa 1|Echipa 2" (fara cereri noi).
  * Zilele (data-day) fara niciun meci vizibil se ascund si ele.
  */

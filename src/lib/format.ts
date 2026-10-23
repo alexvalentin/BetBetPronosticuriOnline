@@ -66,7 +66,7 @@ export function pointsChip(points: number | null) {
   return { text: "Greșit 0", tone: "miss" };
 }
 
-// Eticheta de puncte pentru Istoric: verde = scor corect, galben = rezultat corect, rosu = gresit
+// Eticheta de puncte pentru Rezultate: verde = scor corect, galben = rezultat corect, rosu = gresit
 export function historyChip(points: number | null) {
   if (points === null) return null;
   if (points === 3) return { text: "Scor exact +3", tone: "h-exact" };

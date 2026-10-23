@@ -45,17 +45,17 @@ export default async function StandingsPage({
 
   return (
     <>
-      <h1 className="title">Tabele</h1>
+      <h1 className="title">Clasamente</h1>
 
       {!selected ? (
-        <p className="muted">Încă nu sunt tabele. Apar după prima sincronizare a clasamentelor.</p>
+        <p className="muted">Încă nu sunt clasamente. Apar după prima sincronizare.</p>
       ) : (
         <>
           <nav className="chips" aria-label="Competiții">
             {list.map((s) => (
               <Link
                 key={`${s.league_id}-${s.season}`}
-                href={`/tabele?liga=${s.league_id}`}
+                href={`/clasamente?liga=${s.league_id}`}
                 aria-current={s.league_id === selected.league_id ? "page" : undefined}
               >
                 {s.league_name}

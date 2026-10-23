@@ -8,8 +8,8 @@ Next.js + Supabase + football-data.org, instalabil pe telefon (PWA).
 - Pronosticul se blochează la ora de start, verificat în baza de date (nu pe telefon).
 - Pronosticurile celorlalți se văd abia după startul meciului.
 - Puncte: scor exact 3, rezultat corect (1/X/2) 1, greșit 0. Se ia scorul după 90 de minute.
-- Clasament și istoric cu pronosticurile tuturor pe fiecare meci terminat.
-- **Tabele**: clasamentul fiecărei competiții urmărite, reîmprospătat o dată pe zi.
+- Clasament și rezultate cu pronosticurile tuturor pe fiecare meci terminat.
+- **Clasamente**: clasamentul fiecărei competiții urmărite, reîmprospătat o dată pe zi.
 - Acces doar pe invitație, autentificare cu cod primit pe email.
 
 ## Important: competiții neacoperite de planul gratuit
@@ -39,7 +39,7 @@ Toate recalculează punctele pronosticurilor. Planul gratuit football-data.org p
 
 Programarea rulează din GitHub Actions (`.github/workflows/sync.yml`). Adaugă în repo secretele `SITE_URL` și `CRON_SECRET`. Repo-ul public are minute nelimitate; la un repo privat, cele 96 de rulări pe zi pot depăși minutele gratuite, iar alternativa e cron-job.org.
 
-Prima dată, declanșează manual `upcoming`, apoi `standings` (Actions -> Run workflow sau local cu curl) ca să apară meciurile și tabelele.
+Prima dată, declanșează manual `upcoming`, apoi `standings` (Actions -> Run workflow sau local cu curl) ca să apară meciurile și clasamentele.
 
 ## Deploy
 Vercel (plan gratuit): importă repo-ul și adaugă aceleași variabile de mediu. Pe telefon: "Adaugă pe ecranul principal".

@@ -39,7 +39,7 @@ export default async function SetariPage({
           required
           autoComplete="off"
         />
-        <p className="muted small">Apare în loc de email, pe Clasament, Istoric și la meciuri.</p>
+        <p className="muted small">Apare în loc de email, pe Clasament, Rezultate și la meciuri.</p>
         <button className="btn" type="submit">Salvează</button>
       </form>
 

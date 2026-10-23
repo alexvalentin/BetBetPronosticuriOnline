@@ -180,7 +180,7 @@ revoke all on public.leaderboard from anon;
 grant select on public.leaderboard to authenticated;
 
 -- =========================================================
--- 6. Tabele (clasamentele competitiilor de la football-data.org)
+-- 6. Clasamente (clasamentele competitiilor de la football-data.org)
 -- =========================================================
 create table public.standings (
   league_id text not null,              -- codul competitiei, ex: 'PL'
