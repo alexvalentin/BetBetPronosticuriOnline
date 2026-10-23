@@ -38,8 +38,9 @@ export default function MatchCard({
 
   return (
     <article className="match">
-      <div className="meta">
+      <div className={`meta${phase !== "upcoming" ? " has-status" : ""}`}>
         <span className="league" data-league={match.league_id}>{match.league_name}</span>
+        {phase !== "upcoming" && <span className="meta-break" aria-hidden="true" />}
         {phase === "live" && (
           <span className="live-badge">
             <span className="live-dot" aria-hidden="true" />
