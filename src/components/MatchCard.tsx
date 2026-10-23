@@ -1,6 +1,6 @@
 import { savePrediction } from "@/app/actions";
 import type { Match, Prediction } from "@/lib/types";
-import { dateLabel, liveScore, matchPhase, pointsChip, statusLabel, timeLabel } from "@/lib/format";
+import { dateLabel, liveScore, roundLabel, matchPhase, pointsChip, statusLabel, timeLabel } from "@/lib/format";
 import SaveButton from "@/components/SaveButton";
 
 function Team({ name, logo, away }: { name: string; logo: string | null; away?: boolean }) {
@@ -24,6 +24,7 @@ export default function MatchCard({
 }) {
   const kickoff = new Date(match.kickoff_at).getTime();
   const phase = matchPhase(match, now);
+  const round = roundLabel(match);
   const open = !match.is_finished && phase !== "off" && kickoff > now;
   const chip = pointsChip(prediction?.points ?? null);
   const score = phase === "live" || phase === "checking" ? liveScore(match) : null;
@@ -57,7 +58,7 @@ export default function MatchCard({
             {match.status === "POSTPONED" || match.status === "Postponed" ? "Amânat" : "Anulat"}
           </span>
         )}
-        {match.round && <span>{match.round}</span>}
+        {round && <span>{round}</span>}
         <span>{dateLabel(match.kickoff_at)} · {timeLabel(match.kickoff_at)}</span>
       </div>
 

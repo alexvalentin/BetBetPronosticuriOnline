@@ -116,3 +116,35 @@ export function liveScore(m: Match): { home: number; away: number } | null {
   if (ft && ft.home !== null && ft.away !== null) return { home: ft.home, away: ft.away };
   return null;
 }
+
+// Faze eliminatorii: football-data.org (stage) si Highlightly (round), traduse
+const STAGES: Record<string, string> = {
+  LAST_32: "Șaisprezecimi",
+  LAST_16: "Optimi",
+  QUARTER_FINALS: "Sferturi",
+  SEMI_FINALS: "Semifinale",
+  FINAL: "Finala",
+  PLAYOFFS: "Baraj",
+};
+const MATCH_WORD = "Match"; // cuvantul afisat inaintea numarului etapei ("Match 13")
+
+/** Eticheta rundei: orice numar de etapa/runda devine "Match N"; fazele eliminatorii sunt traduse. */
+export function roundLabel(m: Match): string | null {
+  const raw = m.raw as { stage?: string; matchday?: number | null } | null | undefined;
+  if (raw?.stage && STAGES[raw.stage]) return STAGES[raw.stage];
+
+  const r = m.round?.trim();
+  if (r) {
+    if (/round of 32/i.test(r)) return STAGES.LAST_32;
+    if (/round of 16/i.test(r)) return STAGES.LAST_16;
+    if (/quarter/i.test(r)) return STAGES.QUARTER_FINALS;
+    if (/semi/i.test(r)) return STAGES.SEMI_FINALS;
+    if (/^final$/i.test(r)) return STAGES.FINAL;
+    if (/play-?offs?|knockout round/i.test(r)) return STAGES.PLAYOFFS;
+    const group = r.match(/^League ([A-D])\s*-\s*(\d+)$/i); // Nations League: pastram liga
+    if (group) return `Liga ${group[1].toUpperCase()} · ${MATCH_WORD} ${group[2]}`;
+    const n = r.match(/(\d+)\s*$/);
+    return n ? `${MATCH_WORD} ${n[1]}` : r;
+  }
+  return raw?.matchday ? `${MATCH_WORD} ${raw.matchday}` : null;
+}
