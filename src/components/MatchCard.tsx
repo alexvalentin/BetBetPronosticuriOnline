@@ -58,14 +58,15 @@ export default function MatchCard({
             {match.status === "POSTPONED" || match.status === "Postponed" ? "Amânat" : "Anulat"}
           </span>
         )}
-        {round && <span>{round}</span>}
-        <span>{dateLabel(match.kickoff_at)} · {timeLabel(match.kickoff_at)}</span>
+        {round && <span className="round-badge">{round}</span>}
       </div>
 
       {open ? (
         <form action={savePrediction} className="board">
           <input type="hidden" name="match_id" value={match.id} />
           <Team name={match.home_team} logo={match.home_logo} />
+          <div className="predwrap">
+            <small className="matchwhen">{dateLabel(match.kickoff_at)} · {timeLabel(match.kickoff_at)}</small>
           <div className="digits">
             <input
               name="home"
@@ -91,6 +92,7 @@ export default function MatchCard({
               aria-label={`Goluri ${match.away_team}`}
             />
           </div>
+          </div>
           <Team name={match.away_team} logo={match.away_logo} away />
           <div className="board-foot">
             {prediction && <span className="chip pending">Pronostic salvat</span>}
@@ -100,7 +102,8 @@ export default function MatchCard({
       ) : (
         <div className="board">
           <Team name={match.home_team} logo={match.home_logo} />
-          <div className="predwrap">
+          <div className="predwrap two">
+            <small className="matchwhen">{dateLabel(match.kickoff_at)} · {timeLabel(match.kickoff_at)}</small>
             <small className="predlabel">Pronosticul tău</small>
             <div className="digits static" aria-label="Pronosticul tău">
               <b>{prediction ? prediction.home_goals : "–"}</b>
