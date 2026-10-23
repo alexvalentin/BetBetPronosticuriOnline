@@ -161,7 +161,7 @@ end $$;
 revoke execute on function public.settle_predictions() from public, anon, authenticated;
 
 -- =========================================================
--- 5. Clasament
+-- 5. Punctaj (clasamentul userilor)
 -- =========================================================
 create view public.leaderboard as
 select

@@ -23,7 +23,7 @@ export default async function LeaderboardPage() {
 
   return (
     <>
-      <h1 className="title">Clasament</h1>
+      <h1 className="title">Punctaj</h1>
       <div className="tablewrap">
         <table className="table">
           <thead>

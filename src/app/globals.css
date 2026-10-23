@@ -270,7 +270,7 @@ a { color: inherit; }
 .chip.miss { background: var(--bad-bg); color: var(--bad-fg); }
 .chip.pending { background: var(--neutral-bg); color: var(--muted); }
 
-/* Clasament */
+/* Punctaj */
 .tablewrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
 	section + section .tablewrap {
 	margin-top: 16px;

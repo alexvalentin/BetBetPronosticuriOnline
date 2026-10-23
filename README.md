@@ -8,7 +8,7 @@ Next.js + Supabase + football-data.org, instalabil pe telefon (PWA).
 - Pronosticul se blochează la ora de start, verificat în baza de date (nu pe telefon).
 - Pronosticurile celorlalți se văd abia după startul meciului.
 - Puncte: scor exact 3, rezultat corect (1/X/2) 1, greșit 0. Se ia scorul după 90 de minute.
-- Clasament și rezultate cu pronosticurile tuturor pe fiecare meci terminat.
+- Punctaj (clasamentul userilor) și rezultate cu pronosticurile tuturor pe fiecare meci terminat.
 - **Clasamente**: clasamentul fiecărei competiții urmărite, reîmprospătat o dată pe zi.
 - Acces doar pe invitație, autentificare cu cod primit pe email.
 
