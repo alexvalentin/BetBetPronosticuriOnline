@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/", label: "Meciuri" },
-  { href: "/punctaj", label: "Punctaj" },
-  { href: "/clasamente", label: "Clasamente" },
   { href: "/rezultate", label: "Rezultate" },
+  { href: "/clasamente", label: "Clasamente" },
+  { href: "/punctaj", label: "Punctaj" },
 ];
 
 export default function Nav() {
