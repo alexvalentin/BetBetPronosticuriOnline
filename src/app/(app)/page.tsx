@@ -57,6 +57,7 @@ export default async function MatchesPage({
   // Exista un meci in desfasurare (sau neconfirmat inca) in ultimele 6 ore? Atunci pagina cere reimprospatari.
   const active = (matches ?? []).some((m) => {
     const phase = matchPhase(m, now);
+    if (phase === "finished" && m.finished_at) return now - new Date(m.finished_at).getTime() < 20 * 60e3; // clasamentul de dupa meci
     return (phase === "live" || phase === "checking") && now - new Date(m.kickoff_at).getTime() < 6 * 3600e3;
   });
 
