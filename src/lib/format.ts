@@ -60,7 +60,7 @@ export function statusLabel(m: Match, now: number = Date.now()) {
   switch (matchPhase(m, now)) {
     case "finished": return "Meci terminat";
     case "live": return "În desfășurare";
-    case "checking": return "Se verifică rezultatul";
+    case "checking": return "Scor indisponibil momentan";
     case "off": return m.status === "POSTPONED" || m.status === "Postponed" ? "Amânat" : "Anulat";
     default: return "Programat";
   }

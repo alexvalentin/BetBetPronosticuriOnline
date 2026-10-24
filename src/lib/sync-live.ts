@@ -23,6 +23,14 @@ async function finishedIds(db: SupabaseClient, ids: number[]): Promise<Set<numbe
   return new Set((data ?? []).map((r) => r.id as number));
 }
 
+// Protection against stale API answers: a match that is ALREADY finished in our database must never be
+// written back as "not finished" (the free API sometimes returns old data). Returns the rows that are safe to save,
+// plus the set of ids that were finished before this sync.
+export async function keepFinished<T extends { id: number; is_finished: boolean }>(db: SupabaseClient, rows: T[]) {
+  const was = await finishedIds(db, rows.map((r) => r.id));
+  return { rows: rows.filter((r) => r.is_finished || !was.has(r.id)), was };
+}
+
 // Stores the moment a match was first seen as finished (used to time the standings refresh after a match).
 // Only matches that were NOT finished before this sync are marked (avoids a burst of calls on the first run).
 async function markFinished(db: SupabaseClient, rows: { id: number; is_finished: boolean }[], wasFinished: Set<number>) {
@@ -62,9 +70,10 @@ async function footballLive(db: SupabaseClient, force: boolean): Promise<LiveRes
   const day = (offset: number) => new Date(now + offset * 86400e3).toISOString().slice(0, 10);
   const matches = await fetchMatchesByDateRange(day(-1), day(1));
   // Convert API matches to database rows and remove duplicate ids.
-  const rows = [...new Map(matches.map(footballRow).map((r) => [r.id, r])).values()];
+  const all = [...new Map(matches.map(footballRow).map((r) => [r.id, r])).values()];
+  // Drop rows that would turn an already finished match back into "not finished"; `was` = ids finished before this sync.
+  const { rows, was } = await keepFinished(db, all);
   if (rows.length) {
-    const was = await finishedIds(db, rows.map((r) => r.id)); // which matches were already finished before this sync
     const { error } = await db.from("matches").upsert(rows, { onConflict: "id" }); // insert or update by match id
     if (error) throw new Error(error.message);
     await markFinished(db, rows, was); // timestamp the newly finished matches
@@ -97,9 +106,9 @@ async function highlightlyLive(db: SupabaseClient, force: boolean): Promise<Live
     const [code, day] = key.split("|");
     try {
       const matches = await fetchMatchesByDate(code, day); // all matches of that league on that day
-      const rows = matches.map((m) => highlightlyRow(m, code)); // convert to database rows
+      // Convert to database rows, dropping those that would un-finish an already finished match.
+      const { rows, was } = await keepFinished(db, matches.map((m) => highlightlyRow(m, code)));
       if (rows.length) {
-        const was = await finishedIds(db, rows.map((r) => r.id)); // which ones were already finished
         const { error } = await db.from("matches").upsert(rows, { onConflict: "id" }); // insert or update
         if (error) throw new Error(error.message);
         await markFinished(db, rows, was); // timestamp the newly finished matches

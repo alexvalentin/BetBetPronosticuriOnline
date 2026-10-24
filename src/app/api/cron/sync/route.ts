@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchMatchesByDateRange, toRow } from "@/lib/football";
 import { refreshAllStandings } from "@/lib/standings";
-import { syncFootballLive } from "@/lib/sync-live";
+import { syncFootballLive, keepFinished } from "@/lib/sync-live";
 
 export const dynamic = "force-dynamic"; // never cache this endpoint
 export const maxDuration = 60; // seconds allowed for the function on Vercel
@@ -45,7 +45,9 @@ export async function GET(req: Request) {
   }
 
   // Convert to database rows and remove duplicate ids (the 3 date ranges overlap by a day).
-  const rows = [...new Map(matches.map(toRow).map((r) => [r.id, r])).values()];
+  const all = [...new Map(matches.map(toRow).map((r) => [r.id, r])).values()];
+  // Never turn an already finished match back into "not finished" with stale API data.
+  const { rows } = await keepFinished(db, all);
 
   if (rows.length) {
     const { error } = await db.from("matches").upsert(rows, { onConflict: "id" }); // insert or update by match id

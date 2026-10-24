@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LEAGUES, fetchMatchesByDate, fetchStandings, toRow } from "@/lib/highlightly";
-import { syncHighlightlyLive } from "@/lib/sync-live";
+import { syncHighlightlyLive, keepFinished } from "@/lib/sync-live";
 import { MATCH_EXCLUDED } from "@/lib/football";
 
 export const dynamic = "force-dynamic"; // never cache this endpoint
@@ -62,7 +62,8 @@ export async function GET(req: Request) {
   for (const { code, day } of pairs) {
     try {
       const matches = await fetchMatchesByDate(code, day);
-      const rows = matches.map((m) => toRow(m, code)); // convert to database rows
+      // Convert to database rows; never turn an already finished match back into "not finished".
+      const { rows } = await keepFinished(db, matches.map((m) => toRow(m, code)));
       if (rows.length) {
         const { error } = await db.from("matches").upsert(rows, { onConflict: "id" });
         if (error) throw new Error(error.message);
