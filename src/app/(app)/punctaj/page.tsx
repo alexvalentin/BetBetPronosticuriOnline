@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"; // always render fresh data, never cache
 
+// A row of the `leaderboard` view: totals for one player.
 type Row = {
   user_id: string;
   display_name: string;
@@ -12,13 +13,14 @@ type Row = {
   settled: number;
 };
 
+// "Punctaj" page: the players' ranking, by total points and then by number of exact scores.
 export default async function LeaderboardPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("leaderboard")
     .select("*")
     .order("total_points", { ascending: false })
-    .order("exact_scores", { ascending: false })
+    .order("exact_scores", { ascending: false }) // tie-breaker
     .returns<Row[]>();
 
   return (
@@ -37,6 +39,7 @@ export default async function LeaderboardPage() {
             </tr>
           </thead>
           <tbody>
+            {/* one line per player; the position is the index in the sorted list */}
             {(data ?? []).map((r, i) => (
               <tr key={r.user_id}>
                 <td>{i + 1}</td>

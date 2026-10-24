@@ -4,38 +4,42 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 export type TeamOption = { name: string; league: string };
 
+// Normalizes text for comparison: removes accents (diacritics), lowercases and trims.
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
 /**
- * Cautare de echipa pentru Meciuri / Rezultate.
- * Filtreaza direct in pagina elementele cu data-teams="Echipa 1|Echipa 2" (fara cereri noi).
- * Zilele (data-day) fara niciun meci vizibil se ascund si ele.
+ * Team search for Meciuri / Rezultate.
+ * It filters directly in the page the elements that have data-teams="Team 1|Team 2" (no new requests).
+ * Days (data-day) that have no visible match are hidden too.
  */
 export default function TeamSearch({ teams, scopeId }: { teams: TeamOption[]; scopeId: string }) {
-  const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-  const [count, setCount] = useState(0);
+  const [q, setQ] = useState(""); // text typed in the box
+  const [selected, setSelected] = useState<string | null>(null); // team picked from the dropdown (active filter)
+  const [open, setOpen] = useState(false); // is the dropdown open?
+  const [count, setCount] = useState(0); // number of matches visible under the filter
   const boxRef = useRef<HTMLDivElement>(null);
 
+  // Dropdown suggestions: teams containing the typed text (only from 3 letters, max 8).
   const suggestions = useMemo(() => {
     const n = norm(q);
     if (n.length < 3) return [];
     return teams.filter((t) => norm(t.name).includes(n)).slice(0, 8);
   }, [q, teams]);
 
-  // Aplica filtrul pe elementele din pagina (si reaplica daca pagina se reimprospateaza)
+  // Applies the filter on the elements in the page (and reapplies it if the page refreshes)
   useEffect(() => {
-    const scope = document.getElementById(scopeId);
+    const scope = document.getElementById(scopeId); // the container that holds the match list
     if (!scope) return;
     const target = selected ? norm(selected) : null;
     const apply = () => {
       let visible = 0;
+      // Show only the matches where one of the two teams is the selected one.
       scope.querySelectorAll<HTMLElement>("[data-teams]").forEach((el) => {
         const show = !target || (el.dataset.teams ?? "").split("|").some((t) => norm(t) === target);
         el.hidden = !show;
         if (show) visible++;
       });
+      // Hide the day sections that have no visible match left.
       scope.querySelectorAll<HTMLElement>("[data-day]").forEach((sec) => {
         sec.hidden = !!target && !sec.querySelector("[data-teams]:not([hidden])");
       });
@@ -43,12 +47,13 @@ export default function TeamSearch({ teams, scopeId }: { teams: TeamOption[]; sc
     };
     apply();
     if (!target) return;
+    // While a filter is active, reapply it whenever the list changes (e.g. after an auto refresh).
     const obs = new MutationObserver(apply);
     obs.observe(scope, { childList: true, subtree: true });
     return () => obs.disconnect();
   }, [selected, scopeId]);
 
-  // Inchide dropdown-ul la click in afara
+  // Closes the dropdown on click outside
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
@@ -57,11 +62,13 @@ export default function TeamSearch({ teams, scopeId }: { teams: TeamOption[]; sc
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
+  // Selects a team: applies the filter and closes the dropdown.
   const pick = (name: string) => {
     setSelected(name);
     setQ(name);
     setOpen(false);
   };
+  // Clears the search and the filter.
   const clear = () => {
     setSelected(null);
     setQ("");
@@ -79,12 +86,14 @@ export default function TeamSearch({ teams, scopeId }: { teams: TeamOption[]; sc
           aria-label="Caută echipa"
           value={q}
           onChange={(e) => {
+            // Typing changes the text, cancels the current filter and opens the dropdown.
             setQ(e.target.value);
             setSelected(null);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={(e) => {
+            // Enter picks the first suggestion; Escape closes the dropdown.
             if (e.key === "Enter" && suggestions[0]) {
               e.preventDefault();
               pick(suggestions[0].name);
@@ -96,6 +105,7 @@ export default function TeamSearch({ teams, scopeId }: { teams: TeamOption[]; sc
           <button type="button" className="tsearch-x" onClick={clear} aria-label="Șterge căutarea">×</button>
         )}
       </div>
+      {/* Suggestions dropdown (appears from 3 typed letters) */}
       {open && !selected && q.trim().length >= 3 && (
         <ul className="tsearch-dd" role="listbox">
           {suggestions.length === 0 && <li className="tsearch-empty">Nicio echipă găsită</li>}
@@ -109,6 +119,7 @@ export default function TeamSearch({ teams, scopeId }: { teams: TeamOption[]; sc
           ))}
         </ul>
       )}
+      {/* Summary of the active filter */}
       {selected && (
         <p className="tsearch-chip">
           Filtru: {selected} · {count} {count === 1 ? "meci" : "meciuri"}

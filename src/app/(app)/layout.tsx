@@ -3,9 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions";
 import Nav from "@/components/Nav";
 
+// Layout shared by all pages of the logged-in area: top bar (name, logout, menu) + page content.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  // Display name of the logged-in user (shown in the top bar).
   const { data: profile } = user
     ? await supabase.from("profiles").select("display_name").eq("id", user.id).single()
     : { data: null };

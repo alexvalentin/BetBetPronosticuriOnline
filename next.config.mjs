@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // linkurile vechi (favorite, ecran principal) continua sa mearga
+  // old links (bookmarks, home-screen shortcuts) keep working: permanent redirects from the old page names to the new ones
   async redirects() {
     return [
       { source: "/clasament", destination: "/punctaj", permanent: true },

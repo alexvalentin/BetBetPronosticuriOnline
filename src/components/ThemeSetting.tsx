@@ -4,21 +4,24 @@ import { useEffect, useState } from "react";
 
 type Theme = "auto" | "light" | "dark";
 
+// The three choices shown as buttons.
 const OPTIONS: { value: Theme; label: string }[] = [
   { value: "auto", label: "Automat" },
   { value: "light", label: "Luminos" },
   { value: "dark", label: "Întunecat" },
 ];
 
+// Applies the theme on the page: "auto" removes the attribute (CSS then follows the phone setting).
 function apply(theme: Theme) {
   if (theme === "auto") delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = theme;
 }
 
-/** Alegerea temei: Automat (dupa telefon), Luminos sau Intunecat. Se pastreaza in browser, pe fiecare dispozitiv. */
+/** Theme choice: Automat (follows the phone), Luminos or Intunecat. It is kept in the browser, on each device. */
 export default function ThemeSetting() {
   const [theme, setTheme] = useState<Theme>("auto");
 
+  // On load, read the saved choice (if any) from the browser storage.
   useEffect(() => {
     try {
       const t = localStorage.getItem("theme");
@@ -26,6 +29,7 @@ export default function ThemeSetting() {
     } catch {}
   }, []);
 
+  // When a button is pressed: update the state, the page and the saved choice.
   const choose = (t: Theme) => {
     setTheme(t);
     apply(t);

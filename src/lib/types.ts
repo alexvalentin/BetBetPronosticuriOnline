@@ -1,3 +1,4 @@
+// A row of the `matches` table, as the pages use it.
 export type Match = {
   id: number;
   league_id: string;
@@ -12,10 +13,11 @@ export type Match = {
   is_finished: boolean;
   home_goals: number | null;
   away_goals: number | null;
-  finished_at?: string | null; // cand a fost vazut prima oara ca terminat
-  raw?: unknown; // raspunsul complet al API-ului (contine scorul curent in timpul meciului)
+  finished_at?: string | null; // when it was first seen as finished
+  raw?: unknown; // the full API response (contains the current score during the match)
 };
 
+// A user's prediction for one match (points stay null until the match is settled).
 export type Prediction = {
   match_id: number;
   home_goals: number;

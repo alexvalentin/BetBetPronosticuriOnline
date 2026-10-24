@@ -4,29 +4,34 @@ import { fetchMatchesByDate, toRow as highlightlyRow } from "./highlightly";
 import { MATCH_EXCLUDED } from "@/lib/football";
 import { refreshDueStandings } from "./standings";
 
-// Sincronizarea "live", folosita si de joburile cron, si de reimprospatarea la vizita (/api/refresh).
-// Oricine o declanseaza, ea se opreste singura daca:
-//  - nu exista niciun meci inceput si neterminat (ultimele 6 ore) -> 0 request-uri catre API
-//  - s-a mai rulat acum mai putin de 4 minute pentru aceeasi sursa (evita dublarea cererilor)
-const THROTTLE_MS = 4 * 60e3;
-const WINDOW_MS = 6 * 3600e3;
+// "Live" synchronisation. It is used both by the cron jobs (Supabase pg_cron, GitHub Actions)
+// and by the refresh-on-visit endpoint (/api/refresh).
+// No matter who triggers it, it stops by itself when:
+//  - there is no match that has started and not finished yet (last 6 hours) -> 0 API requests
+//  - it already ran less than 4 minutes ago for the same source (avoids duplicate API calls)
+const THROTTLE_MS = 4 * 60e3; // minimum time between two live syncs of the same source
+const WINDOW_MS = 6 * 3600e3; // how far back we look for matches that are "in progress"
 
+// Shape of what a live sync returns (useful as the JSON response of the cron endpoints).
 export type LiveResult = { skipped?: string; throttled?: boolean; requests?: number; saved: number; standings?: string[] };
 
-// Noteaza momentul in care un meci a fost vazut prima oara ca terminat (folosit pentru clasamentul de dupa meci)
-// Doar meciurile care NU erau terminate inainte de aceasta sincronizare (evita un val de apeluri la prima rulare)
+// Returns the ids (out of the given ones) that are ALREADY marked as finished in our database.
+// We call it BEFORE saving the fresh API data, so we can tell which matches just finished now.
 async function finishedIds(db: SupabaseClient, ids: number[]): Promise<Set<number>> {
   if (!ids.length) return new Set();
   const { data } = await db.from("matches").select("id").in("id", ids).eq("is_finished", true);
   return new Set((data ?? []).map((r) => r.id as number));
 }
 
+// Stores the moment a match was first seen as finished (used to time the standings refresh after a match).
+// Only matches that were NOT finished before this sync are marked (avoids a burst of calls on the first run).
 async function markFinished(db: SupabaseClient, rows: { id: number; is_finished: boolean }[], wasFinished: Set<number>) {
   const ids = rows.filter((r) => r.is_finished && !wasFinished.has(r.id)).map((r) => r.id);
   if (!ids.length) return;
   await db.from("matches").update({ finished_at: new Date().toISOString() }).in("id", ids).eq("is_finished", true).is("finished_at", null);
 }
 
+// True if any match of this source was updated less than THROTTLE_MS ago (so we can skip the API call).
 async function recentlyUpdated(db: SupabaseClient, source: string) {
   const { data } = await db
     .from("matches")
@@ -38,8 +43,10 @@ async function recentlyUpdated(db: SupabaseClient, source: string) {
   return data ? Date.now() - new Date(data.updated_at).getTime() < THROTTLE_MS : false;
 }
 
+// Live sync for football-data.org matches (1 API request for all leagues).
 async function footballLive(db: SupabaseClient, force: boolean): Promise<LiveResult> {
   const now = Date.now();
+  // Count football-data matches that already kicked off (within the last 6 hours) and are not finished.
   const { count } = await db
     .from("matches")
     .select("id", { count: "exact", head: true })
@@ -47,26 +54,31 @@ async function footballLive(db: SupabaseClient, force: boolean): Promise<LiveRes
     .eq("is_finished", false)
     .lte("kickoff_at", new Date(now).toISOString())
     .gte("kickoff_at", new Date(now - WINDOW_MS).toISOString());
-  if (!count) return { skipped: "niciun meci football-data in desfasurare", saved: 0 };
-  if (!force && (await recentlyUpdated(db, "football-data"))) return { throttled: true, saved: 0 };
+  if (!count) return { skipped: "niciun meci football-data in desfasurare", saved: 0 }; // nothing to update -> no API call
+  if (!force && (await recentlyUpdated(db, "football-data"))) return { throttled: true, saved: 0 }; // too soon since last run
 
-  // ieri + azi (+ maine, ca sa nu depindem de cum trateaza API-ul data de final), cu toate statusurile: prindem si meciul tocmai terminat, care nu mai apare in lista "in desfasurare"
+  // Fetch yesterday + today + tomorrow (tomorrow so we do not depend on how the API treats the end date),
+  // with all statuses, so we also catch a match that has just finished and no longer shows as "in progress".
   const day = (offset: number) => new Date(now + offset * 86400e3).toISOString().slice(0, 10);
   const matches = await fetchMatchesByDateRange(day(-1), day(1));
+  // Convert API matches to database rows and remove duplicate ids.
   const rows = [...new Map(matches.map(footballRow).map((r) => [r.id, r])).values()];
   if (rows.length) {
-    const was = await finishedIds(db, rows.map((r) => r.id));
-    const { error } = await db.from("matches").upsert(rows, { onConflict: "id" });
+    const was = await finishedIds(db, rows.map((r) => r.id)); // which matches were already finished before this sync
+    const { error } = await db.from("matches").upsert(rows, { onConflict: "id" }); // insert or update by match id
     if (error) throw new Error(error.message);
-    await markFinished(db, rows, was);
+    await markFinished(db, rows, was); // timestamp the newly finished matches
   }
+  // Award points for finished matches (database function).
   const { error: settleError } = await db.rpc("settle_predictions");
   if (settleError) throw new Error(settleError.message);
   return { requests: 1, saved: rows.length };
 }
 
+// Live sync for Highlightly matches (1 API request per league+day combination that has a match in progress).
 async function highlightlyLive(db: SupabaseClient, force: boolean): Promise<LiveResult> {
   const now = Date.now();
+  // Find Highlightly matches that already kicked off (last 6 hours) and are not finished, skipping excluded leagues.
   const { data } = await db
     .from("matches")
     .select("league_id, kickoff_at")
@@ -75,36 +87,40 @@ async function highlightlyLive(db: SupabaseClient, force: boolean): Promise<Live
     .eq("is_finished", false)
     .lte("kickoff_at", new Date(now).toISOString())
     .gte("kickoff_at", new Date(now - WINDOW_MS).toISOString());
+  // Unique "league|date" keys: we need only one API request for each of them.
   const keys = new Set((data ?? []).map((r) => `${r.league_id}|${r.kickoff_at.slice(0, 10)}`));
-  if (!keys.size) return { skipped: "niciun meci Highlightly in desfasurare", saved: 0 };
-  if (!force && (await recentlyUpdated(db, "highlightly"))) return { throttled: true, saved: 0 };
+  if (!keys.size) return { skipped: "niciun meci Highlightly in desfasurare", saved: 0 }; // nothing to update -> no API call
+  if (!force && (await recentlyUpdated(db, "highlightly"))) return { throttled: true, saved: 0 }; // too soon since last run
 
   let saved = 0;
   for (const key of keys) {
     const [code, day] = key.split("|");
     try {
-      const matches = await fetchMatchesByDate(code, day);
-      const rows = matches.map((m) => highlightlyRow(m, code));
+      const matches = await fetchMatchesByDate(code, day); // all matches of that league on that day
+      const rows = matches.map((m) => highlightlyRow(m, code)); // convert to database rows
       if (rows.length) {
-        const was = await finishedIds(db, rows.map((r) => r.id));
-        const { error } = await db.from("matches").upsert(rows, { onConflict: "id" });
+        const was = await finishedIds(db, rows.map((r) => r.id)); // which ones were already finished
+        const { error } = await db.from("matches").upsert(rows, { onConflict: "id" }); // insert or update
         if (error) throw new Error(error.message);
-        await markFinished(db, rows, was);
+        await markFinished(db, rows, was); // timestamp the newly finished matches
         saved += rows.length;
       }
     } catch (e) {
+      // One failing league must not stop the others.
       console.error("hl live", code, day, e);
     }
   }
+  // Award points for finished matches.
   const { error: settleError } = await db.rpc("settle_predictions");
   if (settleError) throw new Error(settleError.message);
   return { requests: keys.size, saved };
 }
 
-// Sincronizarea live + clasamentul de dupa meciurile terminate (acesta ruleaza si cand nu mai e niciun meci live,
-// pentru apelul de la 10 minute dupa final)
+// Public entry point: live sync + the standings refresh that follows finished matches.
+// The standings part also runs when no match is live any more (for the follow-up call 10 minutes after the end).
 export async function syncFootballLive(db: SupabaseClient, force = false): Promise<LiveResult> {
   const r = await footballLive(db, force);
+  // A standings error is only logged, so it never breaks the match sync result.
   const standings = await refreshDueStandings(db, "football-data").catch((e) => {
     console.error("standings football", e);
     return [] as string[];
@@ -112,6 +128,7 @@ export async function syncFootballLive(db: SupabaseClient, force = false): Promi
   return { ...r, standings };
 }
 
+// Same as above, for the Highlightly source.
 export async function syncHighlightlyLive(db: SupabaseClient, force = false): Promise<LiveResult> {
   const r = await highlightlyLive(db, force);
   const standings = await refreshDueStandings(db, "highlightly").catch((e) => {

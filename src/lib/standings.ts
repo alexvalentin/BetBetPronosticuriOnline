@@ -2,14 +2,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { LEAGUES, fetchStandings, MATCH_EXCLUDED } from "./football";
 import { LEAGUES as HL_LEAGUES, fetchStandings as fetchHlStandings } from "./highlightly";
 
+// Simple promise-based pause.
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// 1 request per competitie urmarita. 8 competitii, deci 8 request-uri pe rulare, mult sub limita de 10/min.
-// Clasamentul unei singure competitii football-data.org (1 request). Returneaza false daca nu exista tabel acum.
+// 1 request per tracked competition. 8 competitions = 8 requests per run, well under the 10/min limit.
+// Standings of a single football-data.org competition (1 request). Returns false if there is no table right now.
 export async function refreshFootballStandings(db: SupabaseClient, code: string): Promise<boolean> {
   const res = await fetchStandings(code);
-  const groups = res.standings.filter((g) => g.type === "TOTAL");
+  const groups = res.standings.filter((g) => g.type === "TOTAL"); // keep the overall table (not home/away tables)
   if (groups.length === 0) return false;
+  // Seasons start in summer: from July on we are in the season that started this year, before that in last year's.
   const seasonYear = new Date().getUTCMonth() >= 6 ? new Date().getUTCFullYear() : new Date().getUTCFullYear() - 1;
   const { error } = await db.from("standings").upsert(
     { league_id: code, season: seasonYear, league_name: LEAGUES[code], data: groups.map((g) => g.table), updated_at: new Date().toISOString() },
@@ -19,7 +21,7 @@ export async function refreshFootballStandings(db: SupabaseClient, code: string)
   return true;
 }
 
-// Clasamentul unei singure competitii Highlightly (1 request). Nu suprascrie un tabel existent cu unul gol.
+// Standings of a single Highlightly competition (1 request). Never overwrites an existing table with an empty one.
 export async function refreshHighlightlyStandings(db: SupabaseClient, code: string): Promise<boolean> {
   const data = await fetchHlStandings(code);
   if (data.length === 0) return false;
@@ -31,20 +33,21 @@ export async function refreshHighlightlyStandings(db: SupabaseClient, code: stri
   return true;
 }
 
-const MIN = 60e3;
-const GROUP_GAP = 30 * MIN; // meciurile care incep la cel mult 30 min distanta formeaza un "grup"
-const FOLLOW_UP = 10 * MIN; // al doilea apel, la 10 minute dupa final
-const MAX_AGE = 40 * MIN; // dupa 40 min de la final nu mai facem apeluri (ramane cel de la 01:10)
+const MIN = 60e3; // one minute in milliseconds
+const GROUP_GAP = 30 * MIN; // matches starting at most 30 min apart form one "group"
+const FOLLOW_UP = 10 * MIN; // second call, 10 minutes after the end
+const MAX_AGE = 40 * MIN; // 40 min after the end we stop making calls (the 01:10 daily call remains)
 
 /**
- * Clasament dupa meciurile terminate, o singura data pe competitie si "grup" de meciuri:
- *  - se asteapta sa se termine toate meciurile grupului (cele care incep la aceeasi ora, +-30 min)
- *  - football-data.org: un apel imediat dupa final si inca unul la 10 minute dupa
- *  - Highlightly (limita 100/zi): un singur apel, la 10 minute dupa final
- * Nu face nicio cerere catre API daca nu e nimic de facut (doar o interogare in baza noastra).
+ * Standings after finished matches, once per competition and "group" of matches:
+ *  - we wait until all matches of the group are finished (those starting at the same time, +-30 min)
+ *  - football-data.org: one call right after the end and another one 10 minutes later
+ *  - Highlightly (limit 100/day): a single call, 10 minutes after the end
+ * It makes no API request when there is nothing to do (only a query to our own database).
  */
 export async function refreshDueStandings(db: SupabaseClient, source: "football-data" | "highlightly"): Promise<string[]> {
   const now = Date.now();
+  // Matches of this source that finished within the last MAX_AGE (excluded leagues are skipped).
   const q = db
     .from("matches")
     .select("league_id, kickoff_at, finished_at")
@@ -53,6 +56,7 @@ export async function refreshDueStandings(db: SupabaseClient, source: "football-
   const { data: finished } = await (source === "highlightly" ? q.eq("source", "highlightly") : q.neq("source", "highlightly"));
   if (!finished?.length) return [];
 
+  // Per league: when the last match finished and the earliest/latest kickoff of those matches.
   const byLeague = new Map<string, { lastFinish: number; minKick: number; maxKick: number }>();
   for (const m of finished) {
     const f = new Date(m.finished_at).getTime();
@@ -64,9 +68,9 @@ export async function refreshDueStandings(db: SupabaseClient, source: "football-
     );
   }
 
-  const done: string[] = [];
+  const done: string[] = []; // leagues whose standings were refreshed in this run
   for (const [league, g] of byLeague) {
-    // mai sunt meciuri din acelasi grup in desfasurare? atunci asteptam
+    // Are there matches of the same group still in progress? Then we wait.
     const { count: pending } = await db
       .from("matches")
       .select("id", { count: "exact", head: true })
@@ -78,8 +82,10 @@ export async function refreshDueStandings(db: SupabaseClient, source: "football-
       .lte("kickoff_at", new Date(g.maxKick + GROUP_GAP).toISOString());
     if (pending) continue;
 
+    // When were the standings of this league last refreshed?
     const { data: st } = await db.from("standings").select("updated_at").eq("league_id", league).order("updated_at", { ascending: false }).limit(1).maybeSingle();
     const refreshedAt = st ? new Date(st.updated_at).getTime() : 0;
+    // "immediate" = right after the last match ended (football-data only); "followUp" = 10 min after the end.
     const immediate = source === "football-data" && now >= g.lastFinish && refreshedAt < g.lastFinish;
     const followUp = now >= g.lastFinish + FOLLOW_UP && refreshedAt < g.lastFinish + FOLLOW_UP;
     if (!immediate && !followUp) continue;
@@ -94,6 +100,7 @@ export async function refreshDueStandings(db: SupabaseClient, source: "football-
   return done;
 }
 
+// Refreshes the standings of ALL football-data competitions (used by the nightly job).
 export async function refreshAllStandings(db: SupabaseClient) {
   const refreshed: string[] = [];
   for (const code of Object.keys(LEAGUES)) {
@@ -102,7 +109,7 @@ export async function refreshAllStandings(db: SupabaseClient) {
     } catch (e) {
       console.error("standings", code, e);
     }
-    await sleep(3500); // ramanem sub limita de 10 request-uri/minut, cu marja mai mare
+    await sleep(3500); // we stay under the 10 requests/minute limit, with a wider margin
   }
   return refreshed;
 }

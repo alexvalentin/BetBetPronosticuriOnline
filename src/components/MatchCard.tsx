@@ -3,6 +3,7 @@ import type { Match, Prediction } from "@/lib/types";
 import { dateLabel, liveScore, roundLabel, matchPhase, pointsChip, statusLabel, timeLabel } from "@/lib/format";
 import SaveButton from "@/components/SaveButton";
 
+// One team: logo (if any) + name. `away` flips the layout for the away team.
 function Team({ name, logo, away }: { name: string; logo: string | null; away?: boolean }) {
   return (
     <div className={`team${away ? " away" : ""}`}>
@@ -13,6 +14,8 @@ function Team({ name, logo, away }: { name: string; logo: string | null; away?: 
   );
 }
 
+// Card of one match. Before kickoff it shows the prediction form;
+// after kickoff it shows the user's locked prediction, the live/final score and the points earned.
 export default function MatchCard({
   match,
   prediction,
@@ -23,12 +26,12 @@ export default function MatchCard({
   now: number;
 }) {
   const kickoff = new Date(match.kickoff_at).getTime();
-  const phase = matchPhase(match, now);
-  const round = roundLabel(match);
-  const open = !match.is_finished && phase !== "off" && kickoff > now;
-  const chip = pointsChip(prediction?.points ?? null);
-  const score = phase === "live" || phase === "checking" ? liveScore(match) : null;
-  // scorul real afisat sub pronostic: final (dupa 90 min), live sau ultimul scor cunoscut
+  const phase = matchPhase(match, now); // upcoming | live | checking | finished | off
+  const round = roundLabel(match); // e.g. "Match 13"
+  const open = !match.is_finished && phase !== "off" && kickoff > now; // predictions are possible only before kickoff
+  const chip = pointsChip(prediction?.points ?? null); // points badge, once settled
+  const score = phase === "live" || phase === "checking" ? liveScore(match) : null; // current score from the API data
+  // The real score shown under the prediction: final (after 90 min), live, or the last known score
   const real =
     match.is_finished && match.home_goals !== null && match.away_goals !== null
       ? { home: match.home_goals, away: match.away_goals, label: "Rezultat final", live: false, final: true }
@@ -38,8 +41,10 @@ export default function MatchCard({
 
   return (
     <article className="match">
+      {/* Top row: league pill, status badge (LIVE / TERMINAT / ...) and round badge */}
       <div className={`meta${phase !== "upcoming" ? " has-status" : ""}`}>
         <span className="league" data-league={match.league_id}>{match.league_name}</span>
+        {/* forces the status badges onto a second row when there is a status */}
         {phase !== "upcoming" && <span className="meta-break" aria-hidden="true" />}
         {phase === "live" && (
           <span className="live-badge">
@@ -63,6 +68,7 @@ export default function MatchCard({
       </div>
 
       {open ? (
+        // Before kickoff: editable prediction form (home team | score inputs | away team | save button)
         <form action={savePrediction} className="board">
           <input type="hidden" name="match_id" value={match.id} />
           <Team name={match.home_team} logo={match.home_logo} />
@@ -101,6 +107,7 @@ export default function MatchCard({
           </div>
         </form>
       ) : (
+        // After kickoff: read-only board with the user's prediction
         <div className="board">
           <Team name={match.home_team} logo={match.home_logo} />
           <div className="predwrap two">
@@ -113,6 +120,7 @@ export default function MatchCard({
             </div>
           </div>
           <Team name={match.away_team} logo={match.away_logo} away />
+          {/* Footer: real score badge (live / final / last known) or the status text, plus the points badge */}
           <div className="board-foot">
             {real ? (
               <span className="footscore">

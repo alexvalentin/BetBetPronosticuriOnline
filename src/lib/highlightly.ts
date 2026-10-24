@@ -1,6 +1,7 @@
-// Highlightly (plan gratuit BASIC, 100 request-uri/zi). Sursa secundara, pentru competitiile
-// care nu exista pe football-data.org: Liga 1, Liga 2, Europa League, Conference League, Nations League.
-// ID-urile sunt numerice, confirmate manual (vezi conversatia de testare), nu se pot cauta automat la runtime.
+// Highlightly (free BASIC plan, 100 requests/day). Secondary source, for competitions
+// that do not exist on football-data.org: Liga 1, Liga 2, Europa League, Conference League, Nations League.
+// The ids are numeric, confirmed manually (see the testing conversation); they cannot be looked up automatically at runtime.
+// Map of Highlightly league id -> display name.
 export const LEAGUES: Record<string, string> = {
   "241617": "Superliga România",
   "242468": "Liga 2 România",
@@ -9,13 +10,15 @@ export const LEAGUES: Record<string, string> = {
   "5039": "Nations League",
 };
 
-const SEASON = 2026; // sezonul curent la toate cele 5 competitii, verificat manual
-const BASE = "https://soccer.highlightly.net";
+const SEASON = 2026; // current season for all 5 competitions, checked manually
+const BASE = "https://soccer.highlightly.net"; // API base URL
 
+// Authentication header sent with every request (the key lives in an environment variable).
 function authHeaders() {
   return { "x-rapidapi-key": process.env.HIGHLIGHTLY_API_KEY! };
 }
 
+// A match as returned by the Highlightly API (only the fields we use).
 export type HMatch = {
   id: number;
   round: string | null;
@@ -26,7 +29,7 @@ export type HMatch = {
   league: { id: number; name: string; season: number };
 };
 
-// Endpoint-urile /matches si /leagues vin invelite in { data: [...] }
+// The /matches and /leagues endpoints come wrapped in { data: [...] }. Generic GET helper that unwraps it.
 async function apiData<T>(path: string, params: Record<string, string>): Promise<T[]> {
   const url = new URL(BASE + path);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -36,10 +39,11 @@ async function apiData<T>(path: string, params: Record<string, string>): Promise
   return json.data ?? [];
 }
 
-// 1 request per competitie per zi (Highlightly cere leagueId + date, nu accepta interval)
+// 1 request per competition per day (Highlightly requires leagueId + date, it does not accept a range).
 export const fetchMatchesByDate = (leagueId: string, date: string) =>
   apiData<HMatch>("/matches", { leagueId, date });
 
+// One line of a Highlightly standings table.
 type HStandingRow = {
   position: number;
   points: number;
@@ -48,7 +52,7 @@ type HStandingRow = {
 };
 type HStandingsResponse = { groups: { name: string; standings: HStandingRow[] }[] };
 
-// /standings NU are wrapper "data" (confirmat manual) - vine direct {groups:[...], league:{...}}
+// /standings does NOT have the "data" wrapper (confirmed manually) - it comes directly as {groups:[...], league:{...}}
 async function fetchStandingsGroups(leagueId: string): Promise<HStandingsResponse["groups"]> {
   const url = new URL(BASE + "/standings");
   url.searchParams.set("leagueId", leagueId);
@@ -59,8 +63,8 @@ async function fetchStandingsGroups(leagueId: string): Promise<HStandingsRespons
   return json.groups ?? [];
 }
 
-// Normalizam in acelasi format StandingRow[][] folosit si de football-data.org,
-// ca pagina Clasamente sa nu aiba nevoie de cod separat pentru fiecare sursa.
+// We normalize to the same StandingRow[][] format used by football-data.org,
+// so the Clasamente page does not need separate code for each source.
 export async function fetchStandings(leagueId: string) {
   const groups = await fetchStandingsGroups(leagueId);
   return groups.map((g) =>
@@ -77,12 +81,15 @@ export async function fetchStandings(leagueId: string) {
   );
 }
 
+// Status descriptions that mean the match is over.
 const FINISHED = new Set(["Finished", "Full Time", "After Extra Time", "Penalties"]);
 
-// Highlightly da scorul ca text "3 - 1"; id-ul e stocat negativ, ca sa nu se poata suprapune
-// peste vreun id de la football-data.org (care sunt mereu pozitive).
+// Highlightly gives the score as text "3 - 1"; the id is stored as a negative number, so it can never
+// overlap an id from football-data.org (which are always positive).
+// Converts an API match into a row of our `matches` table.
 export function toRow(m: HMatch, leagueId: string) {
   const finished = FINISHED.has(m.state.description);
+  // Split "3 - 1" into [3, 1] (NaN if the score is missing).
   const [h, a] = (m.state.score.current ?? "").split(" - ").map((n) => parseInt(n, 10));
   return {
     id: -m.id,
@@ -97,9 +104,9 @@ export function toRow(m: HMatch, leagueId: string) {
     kickoff_at: m.date,
     status: m.state.description,
     is_finished: finished,
-    home_goals: finished && !Number.isNaN(h) ? h : null,
+    home_goals: finished && !Number.isNaN(h) ? h : null, // goals are stored only for finished matches
     away_goals: finished && !Number.isNaN(a) ? a : null,
-    raw: m,
+    raw: m, // the original API object (used for the live score and minute)
     source: "highlightly",
     updated_at: new Date().toISOString(),
   };
