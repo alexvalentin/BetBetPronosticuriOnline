@@ -8,8 +8,11 @@ import { refreshDueStandings } from "./standings";
 // and by the refresh-on-visit endpoint (/api/refresh).
 // No matter who triggers it, it stops by itself when:
 //  - there is no match that has started and not finished yet (last 6 hours) -> 0 API requests
-//  - it already ran less than 4 minutes ago for the same source (avoids duplicate API calls)
-const THROTTLE_MS = 4 * 60e3; // minimum time between two live syncs of the same source
+//  - it already ran a few minutes ago for the same source (4 min football-data, 5 min Highlightly; avoids duplicate API calls)
+// Minimum time between two live syncs of the same source. football-data.org allows frequent calls (cron every 5 min),
+// Highlightly has a daily limit of 100 requests, so it is called less often (cron every 6 min).
+// The pause is a little shorter than the cron interval, so a run that starts a few seconds early is not skipped.
+const THROTTLE_MS: Record<string, number> = { "football-data": 4 * 60e3, highlightly: 5 * 60e3 };
 const WINDOW_MS = 6 * 3600e3; // how far back we look for matches that are "in progress"
 
 // Shape of what a live sync returns (useful as the JSON response of the cron endpoints).
@@ -48,7 +51,7 @@ async function recentlyUpdated(db: SupabaseClient, source: string) {
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  return data ? Date.now() - new Date(data.updated_at).getTime() < THROTTLE_MS : false;
+  return data ? Date.now() - new Date(data.updated_at).getTime() < THROTTLE_MS[source] : false;
 }
 
 // Live sync for football-data.org matches (1 API request for all leagues).
