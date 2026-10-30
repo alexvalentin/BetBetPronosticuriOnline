@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { LEAGUES, fetchStandings, MATCH_EXCLUDED } from "./football";
-import { LEAGUES as HL_LEAGUES, fetchStandings as fetchHlStandings } from "./highlightly";
+import { LEAGUES as HL_LEAGUES, CUP_IDS, fetchStandings as fetchHlStandings } from "./highlightly";
 
 // Simple promise-based pause.
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -70,6 +70,7 @@ export async function refreshDueStandings(db: SupabaseClient, source: "football-
 
   const done: string[] = []; // leagues whose standings were refreshed in this run
   for (const [league, g] of byLeague) {
+    if (source === "highlightly" && CUP_IDS.has(league)) continue; // cups have no standings table: no request
     // Are there matches of the same group still in progress? Then we wait.
     const { count: pending } = await db
       .from("matches")

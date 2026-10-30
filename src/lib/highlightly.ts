@@ -8,7 +8,17 @@ export const LEAGUES: Record<string, string> = {
   "3337": "Europa League",
   "722432": "Conference League",
   "5039": "Nations League",
+  // Domestic cups (no standings table, matches only). Ids confirmed through the /leagues endpoint.
+  "243319": "Cupa României",
+  "39079": "FA Cup",
+  "122477": "Copa del Rey",
+  "69715": "DFB Pokal",
+  "56950": "Coupe de France",
+  "117371": "Coppa Italia",
 };
+
+// Ids of the competitions that are cups: they have no standings table, so we never request one for them.
+export const CUP_IDS = new Set(["243319", "39079", "122477", "69715", "56950", "117371"]);
 
 const SEASON = 2026; // current season for all 5 competitions, checked manually
 const BASE = "https://soccer.highlightly.net"; // API base URL

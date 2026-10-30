@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { LEAGUES, fetchMatchesByDate, fetchStandings, toRow } from "@/lib/highlightly";
+import { LEAGUES, CUP_IDS, fetchMatchesByDate, fetchStandings, toRow } from "@/lib/highlightly";
 import { syncHighlightlyLive, keepFinished } from "@/lib/sync-live";
 import { MATCH_EXCLUDED } from "@/lib/football";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic"; // never cache this endpoint
 export const maxDuration = 60; // seconds allowed for the function on Vercel
 
 // Cron endpoint for Highlightly. Modes (query parameter `mode`):
-// mode=upcoming  -> today + tomorrow (Romania time), for every competition with matches (without Liga 2): 8 requests
+// mode=upcoming  -> today + tomorrow (Romania time), for every competition with matches (without Liga 2): 20 requests (10 competitions x 2 days)
 // mode=live      -> only the competition+day pairs with a match that started and is not finished in our database: 0-a few requests
 // mode=standings -> once a day, one request per competition: 5 requests
 // Total per day, in the busiest case: ~10 + live + 5, far below this API's limit of 100.
@@ -20,12 +20,13 @@ export async function GET(req: Request) {
 
   const mode = new URL(req.url).searchParams.get("mode") ?? "live";
   const db = createAdminClient();
-  const codes = Object.keys(LEAGUES); // all Highlightly league ids
+  const codes = Object.keys(LEAGUES); // all Highlightly league ids (leagues and cups)
+  const tableCodes = codes.filter((c) => !CUP_IDS.has(c)); // cups have no standings table
 
   // Standings mode: refresh the table of every league.
   if (mode === "standings") {
     const refreshed: string[] = [];
-    for (const code of codes) {
+    for (const code of tableCodes) {
       try {
         const data = await fetchStandings(code);
         if (data.length === 0) continue; // we do not overwrite an existing table with an empty one (e.g. knockout phase, no classic table)
