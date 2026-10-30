@@ -140,6 +140,17 @@ const STAGES: Record<string, string> = {
 };
 const MATCH_WORD = "Match"; // the word shown before the round number ("Match 13")
 
+// Name of a knockout stage where the bracket is split in `fraction` parts (1/fraction of the final):
+// 1/2 = semi-finals, 1/4 = quarter-finals, 1/8 = round of 16, 1/16 = round of 32; earlier stages are "Tur 1/N".
+function cupStage(fraction: number): string {
+  if (fraction === 1) return STAGES.FINAL;
+  if (fraction === 2) return STAGES.SEMI_FINALS;
+  if (fraction === 4) return STAGES.QUARTER_FINALS;
+  if (fraction === 8) return STAGES.LAST_16;
+  if (fraction === 16) return STAGES.LAST_32;
+  return `Tur 1/${fraction}`;
+}
+
 /** Round label: any matchday/round number becomes "Match N"; knockout stages are translated. */
 export function roundLabel(m: Match): string | null {
   const raw = m.raw as { stage?: string; matchday?: number | null } | null | undefined;
@@ -155,6 +166,19 @@ export function roundLabel(m: Match): string | null {
     if (/play-?offs?|knockout round/i.test(r)) return STAGES.PLAYOFFS;
     const group = r.match(/^League ([A-D])\s*-\s*(\d+)$/i); // Nations League: we keep the league
     if (group) return `Liga ${group[1].toUpperCase()} · ${MATCH_WORD} ${group[2]}`;
+    // Cup rounds. "Round of N" and "1/N-finals" both mean the stage with N teams (or 1/N of the bracket).
+    const roundOf = r.match(/^Round of (\d+)$/i);
+    if (roundOf) return cupStage(Number(roundOf[1]) / 2);
+    const fraction = r.match(/^1\/(\d+)-finals?$/i);
+    if (fraction) return cupStage(Number(fraction[1]));
+    if (/^group stage$/i.test(r)) return "Faza grupelor";
+    // Ordinal rounds, e.g. "3rd Round Qualifying", "3rd Round Qualifying Replays", "1st Round"
+    const ordinal = r.match(/^(\d+)(?:st|nd|rd|th) round(.*)$/i);
+    if (ordinal) {
+      const rest = ordinal[2];
+      const base = /qualifying/i.test(rest) ? `Calificări · Turul ${ordinal[1]}` : `Turul ${ordinal[1]}`;
+      return /replay/i.test(rest) ? `${base} · Rejucare` : base;
+    }
     const n = r.match(/(\d+)\s*$/); // trailing number of the round text
     return n ? `${MATCH_WORD} ${n[1]}` : r;
   }
