@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchMatchesByDateRange, toRow as footballRow } from "./football";
 import { fetchMatchesByDate, toRow as highlightlyRow } from "./highlightly";
+import { keepCupMatch } from "./cups";
 import { MATCH_EXCLUDED } from "@/lib/football";
 import { refreshDueStandings } from "./standings";
 
@@ -113,7 +114,7 @@ async function highlightlyLive(db: SupabaseClient, force: boolean): Promise<Live
     try {
       const matches = await fetchMatchesByDate(code, day); // all matches of that league on that day
       // Convert to database rows, dropping those that would un-finish an already finished match.
-      const { rows, was } = await keepFinished(db, matches.map((m) => highlightlyRow(m, code)));
+      const { rows, was } = await keepFinished(db, matches.filter((m) => keepCupMatch(m, code)).map((m) => highlightlyRow(m, code)));
       if (rows.length) {
         const { error } = await db.from("matches").upsert(rows, { onConflict: "id" }); // insert or update
         if (error) throw new Error(error.message);
@@ -173,7 +174,7 @@ export async function catchUpHighlightly(db: SupabaseClient): Promise<{ requests
     const [code, day] = key.split("|");
     try {
       const matches = await fetchMatchesByDate(code, day);
-      const { rows, was } = await keepFinished(db, matches.map((m) => highlightlyRow(m, code)));
+      const { rows, was } = await keepFinished(db, matches.filter((m) => keepCupMatch(m, code)).map((m) => highlightlyRow(m, code)));
       if (rows.length) {
         const { error } = await db.from("matches").upsert(rows, { onConflict: "id" });
         if (error) throw new Error(error.message);
