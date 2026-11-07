@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LEAGUES, CUP_IDS, fetchMatchesByDate, fetchStandings, toRow } from "@/lib/highlightly";
-import { syncHighlightlyLive, keepFinished } from "@/lib/sync-live";
+import { syncHighlightlyLive, keepFinished, catchUpHighlightly } from "@/lib/sync-live";
 import { MATCH_EXCLUDED } from "@/lib/football";
 
 export const dynamic = "force-dynamic"; // never cache this endpoint
@@ -75,9 +75,12 @@ export async function GET(req: Request) {
     }
   }
 
+  // Repair matches that stayed unfinished in the last 3 days (e.g. the request limit ran out during the evening).
+  const catchUp = await catchUpHighlightly(db);
+
   // Award points for matches that are finished.
   const { error: settleError } = await db.rpc("settle_predictions");
   if (settleError) return NextResponse.json({ error: settleError.message }, { status: 500 });
 
-  return NextResponse.json({ mode, requests: pairs.length, saved });
+  return NextResponse.json({ mode, requests: pairs.length + catchUp.requests, saved: saved + catchUp.saved, catchUp });
 }

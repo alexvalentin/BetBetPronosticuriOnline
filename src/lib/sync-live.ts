@@ -8,11 +8,12 @@ import { refreshDueStandings } from "./standings";
 // and by the refresh-on-visit endpoint (/api/refresh).
 // No matter who triggers it, it stops by itself when:
 //  - there is no match that has started and not finished yet (last 6 hours) -> 0 API requests
-//  - it already ran a few minutes ago for the same source (4 min football-data, 5 min Highlightly; avoids duplicate API calls)
+//  - it already ran a few minutes ago for the same source (4 min football-data, 9 min Highlightly; avoids duplicate API calls)
 // Minimum time between two live syncs of the same source. football-data.org allows frequent calls (cron every 5 min),
-// Highlightly has a daily limit of 100 requests, so it is called less often (cron every 6 min).
+// Highlightly has a daily limit of 100 requests, so it is called less often (cron every 10 min).
 // The pause is a little shorter than the cron interval, so a run that starts a few seconds early is not skipped.
-const THROTTLE_MS: Record<string, number> = { "football-data": 4 * 60e3, highlightly: 5 * 60e3 };
+const THROTTLE_MS: Record<string, number> = { "football-data": 4 * 60e3, highlightly: 9 * 60e3 };
+const OFF_STATUSES = "(POSTPONED,Postponed,CANCELLED,Cancelled)"; // statuses of matches that are not played
 const WINDOW_MS = 6 * 3600e3; // how far back we look for matches that are "in progress"
 
 // Shape of what a live sync returns (useful as the JSON response of the cron endpoints).
@@ -63,6 +64,7 @@ async function footballLive(db: SupabaseClient, force: boolean): Promise<LiveRes
     .select("id", { count: "exact", head: true })
     .neq("source", "highlightly")
     .eq("is_finished", false)
+    .not("status", "in", OFF_STATUSES) // postponed / cancelled matches will not be played: no point asking about them
     .lte("kickoff_at", new Date(now).toISOString())
     .gte("kickoff_at", new Date(now - WINDOW_MS).toISOString());
   if (!count) return { skipped: "niciun meci football-data in desfasurare", saved: 0 }; // nothing to update -> no API call
@@ -97,6 +99,7 @@ async function highlightlyLive(db: SupabaseClient, force: boolean): Promise<Live
     .eq("source", "highlightly")
     .not("league_id", "in", `(${MATCH_EXCLUDED.join(",")})`)
     .eq("is_finished", false)
+    .not("status", "in", OFF_STATUSES) // postponed / cancelled matches will not be played: no point asking about them
     .lte("kickoff_at", new Date(now).toISOString())
     .gte("kickoff_at", new Date(now - WINDOW_MS).toISOString());
   // Unique "league|date" keys: we need only one API request for each of them.
@@ -148,4 +151,38 @@ export async function syncHighlightlyLive(db: SupabaseClient, force = false): Pr
     return [] as string[];
   });
   return { ...r, standings };
+}
+
+// Catch-up for Highlightly matches that were left unfinished (for example because the daily request limit was reached
+// during the evening). The live sync only looks at the last 6 hours, so these matches would stay stuck forever.
+// We look 3 days back and ask once for each (league, day) pair, which costs only a few requests.
+export async function catchUpHighlightly(db: SupabaseClient): Promise<{ requests: number; saved: number }> {
+  const now = Date.now();
+  const { data } = await db
+    .from("matches")
+    .select("league_id, kickoff_at")
+    .eq("source", "highlightly")
+    .not("league_id", "in", `(${MATCH_EXCLUDED.join(",")})`)
+    .eq("is_finished", false)
+    .not("status", "in", OFF_STATUSES)
+    .lte("kickoff_at", new Date(now - WINDOW_MS).toISOString())
+    .gte("kickoff_at", new Date(now - 3 * 86400e3).toISOString());
+  const keys = new Set((data ?? []).map((r) => `${r.league_id}|${r.kickoff_at.slice(0, 10)}`));
+  let saved = 0;
+  for (const key of keys) {
+    const [code, day] = key.split("|");
+    try {
+      const matches = await fetchMatchesByDate(code, day);
+      const { rows, was } = await keepFinished(db, matches.map((m) => highlightlyRow(m, code)));
+      if (rows.length) {
+        const { error } = await db.from("matches").upsert(rows, { onConflict: "id" });
+        if (error) throw new Error(error.message);
+        await markFinished(db, rows, was);
+        saved += rows.length;
+      }
+    } catch (e) {
+      console.error("hl catch-up", code, day, e);
+    }
+  }
+  return { requests: keys.size, saved };
 }
