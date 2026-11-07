@@ -112,7 +112,6 @@ export default function MatchCard({
           <Team name={match.home_team} logo={match.home_logo} />
           <div className="predwrap two">
             <small className="matchwhen">{dateLabel(match.kickoff_at)} · {timeLabel(match.kickoff_at)}</small>
-            <small className="predlabel">Pronosticul tău</small>
             <div className="digits static" aria-label="Pronosticul tău">
               <b>{prediction ? prediction.home_goals : "–"}</b>
               <span aria-hidden="true">:</span>
