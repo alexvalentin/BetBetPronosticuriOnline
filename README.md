@@ -1,54 +1,77 @@
-# Pronosticuri
+# Cinci-Zero
 
 Site privat de pronosticuri de fotbal între prieteni. Fără bani, doar puncte.
-Next.js + Supabase + football-data.org, instalabil pe telefon (PWA).
+Next.js + Supabase + football-data.org + Highlightly, instalabil pe telefon (PWA).
+
+Structura completă (pagini, fișiere, baza de date, sincronizări) e în [STRUCTURA.md](STRUCTURA.md).
 
 ## Ce face
-- Pronostic de scor pentru meciurile din Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Champions League, World Cup și Euro.
+- Pronostic de scor pentru meciurile de azi și mâine din: Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Champions League, Superliga României, Europa League, Conference League, Nations League și cupele naționale (Cupa României, FA Cup, Copa del Rey, DFB Pokal, Coupe de France, Coppa Italia).
+- La cupele naționale apar doar meciurile cu echipe mari ale țării respective sau cele de la sferturi în sus.
 - Pronosticul se blochează la ora de start, verificat în baza de date (nu pe telefon).
 - Pronosticurile celorlalți se văd abia după startul meciului.
 - Puncte: scor exact 3, rezultat corect (1/X/2) 1, greșit 0. Se ia scorul după 90 de minute.
-- Punctaj (clasamentul userilor) și rezultate cu pronosticurile tuturor pe fiecare meci terminat.
-- **Clasamente**: clasamentul fiecărei competiții urmărite, reîmprospătat o dată pe zi.
-- Acces doar pe invitație, autentificare cu cod primit pe email.
-
-## Important: competiții neacoperite de planul gratuit
-Planul gratuit de la **football-data.org** acoperă doar 12 competiții fixe. Din lista inițială dorită, **nu sunt disponibile gratuit**: Liga 1 (România), Europa League, Conference League, și meciurile naționale în afara World Cup/Euro (preliminarii, Nations League, amicale).
-
-Planul gratuit **API-Football** ar fi acoperit toate aceste competiții, dar nu oferă acces la sezonul curent (doar sezoane mai vechi), deci nu era folositor pentru meciurile de acum. Dacă la un moment dat vrei toate competițiile din lista inițială, varianta e planul **Pro de la API-Football (19 $/lună)** — vezi discuția din conversație pentru detalii, codul s-ar rescrie pentru el.
+- **Meciuri**: cardurile cu scor live, status (LIVE, TERMINAT) și runda, plus căutare după echipă.
+- **Rezultate**: meciurile terminate, cu pronosticurile tuturor.
+- **Clasamente**: tabelul fiecărei competiții (campionatele, nu cupele).
+- **Punctaj**: clasamentul prietenilor.
+- **Setări**: numele afișat și tema (automată, luminoasă sau întunecată).
+- Acces doar pe invitație, cu cod primit pe email.
 
 ## Instalare
 
 1. **Supabase**: creează un proiect gratuit, apoi rulează `supabase/schema.sql` în SQL Editor.
-   - Dacă ai rulat deja o schemă veche (cu `league_id` ca număr, varianta API-Football), rulează în plus `supabase/migration_footballdata.sql`.
+   Dacă ai o schemă veche, rulează și migrările din `supabase/migration_*.sql`.
 2. **Invitații**: în SQL Editor adaugă emailurile:
    `insert into public.allowed_emails (email) values ('tu@exemplu.ro'), ('prieten@exemplu.ro');`
-3. **Email cu cod**: Authentication -> Emails: deschide șabloanele **Magic Link** și **Confirm signup**, adaugă `{{ .Token }}` în corpul mesajului. Dacă apare mesajul "Set up custom SMTP to edit templates", configurează mai întâi un SMTP propriu (Authentication -> Emails -> SMTP Settings) — de exemplu Gmail, gratuit, cu o parolă de aplicație generată la myaccount.google.com/apppasswords.
-4. **football-data.org**: cont gratuit pe football-data.org, secțiunea **My Account** → copiază **API Token**.
+3. **Email cu cod**: Authentication, Emails: adaugă `{{ .Token }}` în șabloanele **Magic Link** și **Confirm signup**. Dacă apare „Set up custom SMTP”, configurează un SMTP propriu (de exemplu Gmail cu parolă de aplicație).
+4. **Chei API**: cont gratuit la football-data.org (My Account, API Token) și la highlightly.net (Dashboard, API key).
 5. Copiază `.env.example` în `.env.local` și completează valorile.
 6. `npm install` apoi `npm run dev`.
 
 ## Sincronizarea meciurilor
-Endpoint: `/api/cron/sync?mode=upcoming|live|standings`, cu header `Authorization: Bearer <CRON_SECRET>`.
+Rute: `/api/cron/sync` (football-data.org) și `/api/cron/sync-highlightly` (Highlightly), cu `?mode=upcoming|live|standings` și headerul `Authorization: Bearer <CRON_SECRET>`.
 
-- `upcoming`: o dată pe zi, aduce programul din ziua precedentă până peste 15 zile — **1 request**.
-- `live`: la 15 minute, aduce doar meciurile aflate acum în desfășurare — **1 request**.
-- `standings`: o dată pe zi, clasamentul fiecărei competiții urmărite — **8 request-uri**, cu pauză între ele ca să rămână sub limita de 10/minut.
+- `upcoming`: o dată pe zi, programul meciurilor (GitHub Actions).
+- `standings`: o dată pe zi, clasamentele (GitHub Actions).
+- `live`: scorul și finalul, la 5 minute (football-data) și 10 minute (Highlightly), din Supabase `pg_cron`. Se oprește singur când nu e niciun meci în desfășurare.
 
-Toate recalculează punctele pronosticurilor. Planul gratuit football-data.org permite 10 request-uri/minut — consumul de mai sus e mult sub limită.
+Programul zilnic e în `.github/workflows/sync.yml`. Adaugă în repo secretele `SITE_URL` și `CRON_SECRET`. Orele sunt în UTC și trebuie ajustate la schimbarea orei.
 
-Programarea rulează din GitHub Actions (`.github/workflows/sync.yml`). Adaugă în repo secretele `SITE_URL` și `CRON_SECRET`. Repo-ul public are minute nelimitate; la un repo privat, cele 96 de rulări pe zi pot depăși minutele gratuite, iar alternativa e cron-job.org.
+Programarea live din Supabase, în SQL Editor (înlocuiește `<SITE>` și `<CRON_SECRET>`):
 
-Prima dată, declanșează manual `upcoming`, apoi `standings` (Actions -> Run workflow sau local cu curl) ca să apară meciurile și clasamentele.
+```sql
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+select cron.schedule('sync-football-live', '*/5 6-23 * * *', $$
+  select net.http_get(
+    url := '<SITE>/api/cron/sync?mode=live',
+    headers := jsonb_build_object('Authorization', 'Bearer <CRON_SECRET>'),
+    timeout_milliseconds := 30000);
+$$);
+
+select cron.schedule('sync-highlightly-live', '*/10 6-23 * * *', $$
+  select net.http_get(
+    url := '<SITE>/api/cron/sync-highlightly?mode=live',
+    headers := jsonb_build_object('Authorization', 'Bearer <CRON_SECRET>'),
+    timeout_milliseconds := 30000);
+$$);
+```
+
+Nu pune secretul în Git. Verificarea: `select status_code, created from net._http_response order by created desc limit 6;` (200 înseamnă că merge).
+
+Prima dată, pornește manual `upcoming`, apoi `standings` (Actions, Run workflow), ca să apară meciurile și clasamentele.
+
+## Limite de cunoscut
+- football-data.org (plan gratuit): 10 cereri pe minut; uneori întârzie cu statusul și scorul meciurilor.
+- Highlightly (plan gratuit): 100 de cereri pe zi, de urmărit în serile cu Europa League și Conference League simultan.
 
 ## Deploy
-Vercel (plan gratuit): importă repo-ul și adaugă aceleași variabile de mediu. Pe telefon: "Adaugă pe ecranul principal".
+Vercel (plan gratuit): importă repo-ul și adaugă aceleași variabile de mediu. Pe telefon: „Adaugă pe ecranul principal”.
 
 ## De făcut mai departe
-- Ecran pentru schimbarea numelui afișat (acum e partea din email dinaintea @).
-- Joker pe etapă care dublează punctele.
-- Notificări "mai ai 1 oră până la meci" (cere service worker).
+- Interval adaptiv pentru sincronizarea Highlightly (10, 15 sau 20 de minute după numărul de competiții live), dacă se atinge limita zilnică.
+- O pagină cu tabloul eliminatoriu al cupelor.
+- Notificări „mai ai 1 oră până la meci” (cere service worker).
 - Backup periodic al bazei de date.
-
-## Neverificat
-Codul a fost scris fără acces la internet pentru a rula sau compila proiectul. Așteaptă-te la mici ajustări la primul `npm run dev`.
