@@ -155,3 +155,15 @@ Fără valori aici. Se setează în Vercel, în GitHub (secretele `SITE_URL` și
 - Planul gratuit football-data.org uneori actualizează cu întârziere statusul și scorul meciurilor. În acest caz cardul arată „Se verifică” și „Scor indisponibil momentan” până când sursa trimite datele.
 - Highlightly are limita de 100 de cereri pe zi. Dacă se epuizează, meciurile din sursa aceasta nu se mai actualizează până a doua zi, apoi sunt reparate de sincronizarea zilnică.
 - Schimbarea orei (iarnă și vară) cere ajustarea orelor din `sync.yml`. Joburile `pg_cron` rulează în UTC.
+
+## 12. Servicii și conturi folosite
+
+| Serviciu | La ce îl folosim | Unde găsești cheia sau setarea |
+|---|---|---|
+| GitHub (repo `BetBetPronosticuriOnline`) | Codul, deploy automat și programarea zilnică (Actions) | Settings, Secrets and variables, Actions: `SITE_URL`, `CRON_SECRET` |
+| Vercel | Găzduirea site-ului (`bet-bet-pronosticuri-online.vercel.app`) | Project, Settings, Environment Variables |
+| Supabase | Baza de date, login, programarea live (`pg_cron` + `pg_net`) | Project Settings, API (cheile Supabase); SQL Editor pentru joburile `cron` |
+| football-data.org | Ligile mari și Champions League | My Account, API Token (`FOOTBALL_DATA_API_KEY`) |
+| Highlightly | Superliga, Europa și Conference League, Nations League, cupe | Dashboard, API key (`HIGHLIGHTLY_API_KEY`) |
+
+Valorile cheilor nu se pun niciodată în repo. Ele stau doar în Vercel, în secretele GitHub, în `.env.local` local și în joburile `cron` din Supabase.
